@@ -13,8 +13,9 @@ class ImageLoader {
    * Map track types to their background image files
    */
   getImagePath(trackType) {
+    const base = import.meta.env.BASE_URL || '/';
     const imageMap = {
-      'general-roca': '/tracks/GeneralRoca.png'
+      'general-roca': `${base}tracks/GeneralRoca.png`
     };
 
     return imageMap[trackType] || null;
