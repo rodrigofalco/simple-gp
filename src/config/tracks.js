@@ -27,36 +27,13 @@ function addArc(path, cx, cy, r, startAngle, endAngle) {
 // --- 1. STATIC VISUAL TRACK DEFINITIONS ---
 export function getVisualTrackPoints(type) {
     let p = [];
-    if (type === 'l-shape') {
-        const R = 60, ox = 200, oy = 100;
-        const startX = 400; const topY = 50 + oy; const rightX = 650; const midY = 200 + oy; const midX = 250 + ox; const botY = 350 + oy; const leftX = 50 + ox;
-        addLine(p, startX, topY, rightX - R, topY);
-        addArc(p, rightX - R, topY + R, R, -Math.PI/2, 0);
-        addLine(p, rightX, topY + R, rightX, midY - R);
-        addArc(p, rightX - R, midY - R, R, 0, Math.PI/2);
-        addLine(p, rightX - R, midY, midX + R, midY);
-        addArc(p, midX + R, midY + R, R, -Math.PI/2, -Math.PI);
-        addLine(p, midX, midY + R, midX, botY - R);
-        addArc(p, midX - R, botY - R, R, 0, Math.PI/2);
-        addLine(p, midX - R, botY, leftX + R, botY);
-        addArc(p, leftX + R, botY - R, R, Math.PI/2, Math.PI);
-        addLine(p, leftX, botY - R, leftX, topY + R);
-        addArc(p, leftX + R, topY + R, R, Math.PI, 3*Math.PI/2);
-        addLine(p, leftX + R, topY, startX, topY);
-    } else if (type === 's-curve') {
-        const R = 80, ox = 200, oy = 200, startOffset = 200;
-        addLine(p, ox+300 + startOffset, oy, ox+750, oy);
-        addArc(p, ox+750, oy+R, R, -Math.PI/2, Math.PI/2);
-        addLine(p, ox+750, oy+2*R, ox+500, oy+2*R);
-        addArc(p, ox+500, oy+3*R, R, -Math.PI/2, -Math.PI);
-        addLine(p, ox+500-R, oy+3*R, ox+500-R, oy+3.5*R);
-        addArc(p, ox+500-2*R, oy+3.5*R, R, 0, Math.PI/2);
-        addLine(p, ox+500-2*R, oy+4.5*R, ox+R, oy+4.5*R);
-        addArc(p, ox+R, oy+3.5*R, R, Math.PI/2, -Math.PI/2);
-        addLine(p, ox, oy+3.5*R, ox, oy+R);
-        addArc(p, ox+R, oy+R, R, Math.PI, 3*Math.PI/2);
-        addLine(p, ox+R, oy, ox+300 + startOffset, oy);
+    if (type === 'general-roca') {
+        // General Roca circuit - follows the racing line from bezier nodes
+        // This visual path is now minimal since we rely on the background image
+        // We return an empty path since we only want to see the background image
+        return [];
     } else {
+        // Fallback for any other track type
         const cx = 500, cy = 400, w = 600, h = 300, r = h/2;
         const lx = cx - w/4, rx = cx + w/4, ty = cy - r, by = cy + r, startOffset = 150;
         addLine(p, lx + startOffset, ty, rx, ty);
@@ -70,39 +47,40 @@ export function getVisualTrackPoints(type) {
 
 // --- 2. DYNAMIC RACING LINE NODES (Editable) ---
 export function getBezierNodes(type) {
-    if (type === 'l-shape') {
+    if (type === 'general-roca') {
+        // Bezier nodes for General Roca circuit based on the actual track layout
+        // The circuit is viewed from above, coordinates map to the image
+        // Start at the finish line (top right area) and follow the circuit counter-clockwise
         return [
-            {x: 400, y: 150, handleIn: {x:-50, y:0}, handleOut: {x:50, y:0}},
-            {x: 600, y: 150, handleIn: {x:-50, y:0}, handleOut: {x:30, y:0}},
-            {x: 650, y: 200, handleIn: {x:0, y:-30}, handleOut: {x:0, y:30}},
-            {x: 650, y: 250, handleIn: {x:0, y:-30}, handleOut: {x:0, y:30}},
-            {x: 600, y: 300, handleIn: {x:30, y:0}, handleOut: {x:-30, y:0}},
-            {x: 500, y: 300, handleIn: {x:30, y:0}, handleOut: {x:-30, y:0}},
-            {x: 450, y: 350, handleIn: {x:0, y:-30}, handleOut: {x:0, y:30}},
-            {x: 450, y: 400, handleIn: {x:0, y:-30}, handleOut: {x:0, y:30}},
-            {x: 400, y: 450, handleIn: {x:30, y:0}, handleOut: {x:-30, y:0}},
-            {x: 300, y: 450, handleIn: {x:30, y:0}, handleOut: {x:-30, y:0}},
-            {x: 250, y: 400, handleIn: {x:0, y:30}, handleOut: {x:0, y:-30}},
-            {x: 250, y: 200, handleIn: {x:0, y:30}, handleOut: {x:0, y:-30}},
-            {x: 300, y: 150, handleIn: {x:-30, y:0}, handleOut: {x:30, y:0}}
-        ];
-    } else if (type === 's-curve') {
-        return [
-            {x: 600, y: 200, handleIn: {x:-50, y:0}, handleOut: {x:50, y:0}}, // Top Straight Mid
-            {x: 900, y: 200, handleIn: {x:-50, y:0}, handleOut: {x:30, y:0}}, // Approach T1
-            {x: 1030, y: 280, handleIn: {x:0, y:-40}, handleOut: {x:0, y:40}}, // T1 Apex
-            {x: 950, y: 360, handleIn: {x:30, y:0}, handleOut: {x:-50, y:0}}, // T1 Exit
-            {x: 700, y: 360, handleIn: {x:50, y:0}, handleOut: {x:-30, y:0}}, // Back Straight
-            {x: 620, y: 440, handleIn: {x:0, y:-40}, handleOut: {x:0, y:40}}, // S-Entry Apex
-            {x: 580, y: 500, handleIn: {x:20, y:-20}, handleOut: {x:-20, y:20}}, // S-Link
-            {x: 500, y: 560, handleIn: {x:30, y:0}, handleOut: {x:-30, y:0}}, // S-Exit
-            {x: 360, y: 480, handleIn: {x:0, y:40}, handleOut: {x:0, y:-40}}, // Hairpin Apex
-            {x: 360, y: 360, handleIn: {x:0, y:40}, handleOut: {x:0, y:-40}}, // Up Straight
-            {x: 380, y: 280, handleIn: {x:-20, y:20}, handleOut: {x:20, y:-20}}, // Final Corner Entry
-            {x: 440, y: 200, handleIn: {x:-20, y:10}, handleOut: {x:30, y:0}}  // Join Top
+            // Start/Finish Area (top right)
+            {x: 590, y: 120, handleIn: {x: -50, y: 0}, handleOut: {x: 50, y: 0}},
+
+            // Top Left Turn
+            {x: 450, y: 120, handleIn: {x: -50, y: 0}, handleOut: {x: 30, y: 0}},
+            {x: 350, y: 180, handleIn: {x: 0, y: -40}, handleOut: {x: 0, y: 40}},
+
+            // Left Side High Turns
+            {x: 280, y: 220, handleIn: {x: 30, y: 0}, handleOut: {x: -50, y: 0}},
+            {x: 180, y: 200, handleIn: {x: 50, y: 0}, handleOut: {x: -30, y: 0}},
+            {x: 150, y: 260, handleIn: {x: 0, y: -40}, handleOut: {x: 0, y: 40}},
+
+            // Left Side Lower Turns
+            {x: 180, y: 340, handleIn: {x: 30, y: 0}, handleOut: {x: -50, y: 0}},
+            {x: 280, y: 380, handleIn: {x: 50, y: 0}, handleOut: {x: -30, y: 0}},
+
+            // Bottom Left Straight
+            {x: 320, y: 380, handleIn: {x: 0, y: 0}, handleOut: {x: 0, y: 0}},
+
+            // Bottom Section
+            {x: 450, y: 380, handleIn: {x: -30, y: 0}, handleOut: {x: 30, y: 0}},
+            {x: 590, y: 340, handleIn: {x: 0, y: 40}, handleOut: {x: 0, y: -40}},
+
+            // Right Side
+            {x: 620, y: 280, handleIn: {x: 30, y: 0}, handleOut: {x: -30, y: 0}},
+            {x: 600, y: 200, handleIn: {x: 0, y: 40}, handleOut: {x: 0, y: -40}}
         ];
     } else {
-        // Stadium
+        // Fallback stadium
         return [
             {x: 500, y: 250, handleIn: {x:-50, y:0}, handleOut: {x:50, y:0}},
             {x: 650, y: 250, handleIn: {x:-50, y:0}, handleOut: {x:50, y:0}},

@@ -13,6 +13,11 @@ export class TrackRenderer {
    * @param {boolean} hasBackground - Whether the session has a background image
    */
   drawTrack(visualPath, hasBackground = false) {
+    // If visual path is empty, don't draw anything (relying on background image)
+    if (visualPath.length === 0) {
+      return;
+    }
+
     const trackWidth = 140;
     this.ctx.lineJoin = 'round';
     this.ctx.lineCap = 'round';
