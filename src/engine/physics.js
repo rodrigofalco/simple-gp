@@ -111,38 +111,26 @@ export class PhysicsEngine {
 
     // Detect corner intensity (0 = straight, higher = sharper turn)
     const cornerIntensity = Math.abs(angDiff);
-    const isCorner = cornerIntensity > 0.12;
-    const isSharpCorner = cornerIntensity > 0.25;
 
-    // Apply cornering speed based on archetype
-    // Speeders MUST brake hard before corners, turners maintain speed
-    if (isCorner && !racer.finished) {
-      // Calculate target corner speed based on archetype
-      // Lower cornerMult = needs to slow down more
-      const cornerSpeedFactor = 0.7 + (cornerMult * 0.25); // 0.7-0.95 range
-      const targetCornerSpeed = maxSpeed * cornerSpeedFactor;
+    // ANY direction change causes speed loss based on archetype
+    // Speeders lose MUCH more speed on turns, Turners barely affected
+    if (cornerIntensity > 0.02 && !racer.finished) {
+      // Speed penalty scales with turn sharpness and inversely with cornerMult
+      // Speeder (0.70): penalty factor = (1.5 - 0.70) = 0.8
+      // Accelerator (0.90): penalty factor = (1.5 - 0.90) = 0.6
+      // Turner (1.15): penalty factor = (1.5 - 1.15) = 0.35
+      const turnPenaltyFactor = Math.max(0, 1.5 - cornerMult);
 
-      if (isSharpCorner) {
-        // Sharp corners: everyone slows, but speeders slow much more
-        const sharpBrakeFactor = 0.85 + (cornerMult * 0.12); // 0.85-0.97
-        racer.currentSpeed *= sharpBrakeFactor;
+      // VERY strong penalty: intensity * factor * 0.8
+      // For a 0.3 rad turn (moderate): Speeder loses 0.3 * 0.8 * 0.8 = 19.2%
+      const speedPenalty = cornerIntensity * turnPenaltyFactor * 0.8;
 
-        // Speeders brake even harder in sharp corners
-        if (cornerMult < 1.0) {
-          racer.currentSpeed *= 0.94;
-        }
-      } else {
-        // Normal corners
-        if (cornerMult < 1.0) {
-          // Speeders: brake before the corner
-          racer.currentSpeed = Math.min(racer.currentSpeed, targetCornerSpeed);
-          racer.currentSpeed *= 0.97;
-        } else if (cornerMult > 1.0) {
-          // Turners: maintain or slightly increase speed through corners
-          if (racer.currentSpeed < targetCornerSpeed) {
-            racer.currentSpeed += normalAccel * 0.5;
-          }
-        }
+      // Apply penalty (minimum 60% speed to allow significant braking)
+      racer.currentSpeed *= Math.max(0.60, 1 - speedPenalty);
+
+      // Turners accelerate through turns (stronger bonus)
+      if (cornerMult > 1.0) {
+        racer.currentSpeed += normalAccel * 0.8 * (cornerMult - 1.0);
       }
     }
 

@@ -11,7 +11,7 @@ export const GAME_CONFIG = {
   targetRacePixels: 9000,
   racerRadius: 7,
   velocity: 2.4,                    // Increased from 1.8 - higher base speed
-  startDelayFrames: 60,
+  startDelayFrames: 260,            // ~4.3 seconds to match countdown animation (3,2,1,GO!)
 
   // Path generation
   stepSize: STEP_SIZE,
@@ -35,8 +35,8 @@ export const GAME_CONFIG = {
   speedRandomVariation: 0.03,       // Reduced randomness slightly
 
   // Acceleration - longer acceleration periods
-  launchAcceleration: 0.008,        // Reduced from 0.02 - slower launch
-  normalAcceleration: 0.012,        // Reduced from 0.02 - longer to reach top speed
+  launchAcceleration: 0.004,        // Halved from 0.008 - slower launch
+  normalAcceleration: 0.006,        // Halved from 0.012 - much longer to reach top speed
   deceleration: 0.003,              // Increased from 0.002 - faster slowdown
 
   // Finished racer speed

@@ -2,18 +2,28 @@
  * Top Bar UI Component
  * Renders and manages the top navigation bar with track selection and controls
  */
+import { AVAILABLE_TRACKS, DEFAULT_TRACK } from '../config/tracks.js';
+
 export class TopBar {
     constructor(containerElementId = 'topBarContainer') {
         this.containerEl = document.getElementById(containerElementId);
+        this.currentTrack = DEFAULT_TRACK;
     }
 
     /**
      * Renders the top bar HTML
      * @param {Object} config - Configuration object
      * @param {string} config.title - Title to display
+     * @param {string} config.defaultTrack - Default track ID
      */
     render(config = {}) {
         const title = config.title || 'GP Vector Manager';
+        this.currentTrack = config.defaultTrack || DEFAULT_TRACK;
+
+        // Build track options
+        const trackOptions = AVAILABLE_TRACKS.map(track =>
+            `<option value="${track.id}" ${track.id === this.currentTrack ? 'selected' : ''}>${track.icon} ${track.name}</option>`
+        ).join('');
 
         const html = `
             <div class="flex-shrink-0 flex justify-between items-center mb-4 bg-white p-3 rounded-lg shadow-sm border border-gray-200">
@@ -21,6 +31,15 @@ export class TopBar {
                     🏍️ <span>${title}</span>
                 </h1>
                 <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2">
+                        <label for="trackSelect" class="text-sm text-gray-600 font-medium">Pista:</label>
+                        <select id="trackSelect" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 py-1.5 px-3 cursor-pointer">
+                            ${trackOptions}
+                        </select>
+                    </div>
+
+                    <div class="w-px h-6 bg-gray-300"></div>
+
                     <button id="pauseBtn" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1.5 px-4 rounded shadow-sm text-sm w-24 text-center">
                         ⏸️ Pausa
                     </button>
@@ -50,11 +69,13 @@ export class TopBar {
      * @param {Function} handlers.onPauseToggle - Called when pause is toggled
      * @param {Function} handlers.onRestart - Called when restart is clicked
      * @param {Function} handlers.onDebugToggle - Called when debug mode is toggled
+     * @param {Function} handlers.onTrackChange - Called when track is changed
      */
     bindEventHandlers(handlers = {}) {
         const pauseBtn = document.getElementById('pauseBtn');
         const restartBtn = document.getElementById('restartBtn');
         const debugMode = document.getElementById('debugMode');
+        const trackSelect = document.getElementById('trackSelect');
 
         if (pauseBtn && handlers.onPauseToggle) {
             pauseBtn.addEventListener('click', () => handlers.onPauseToggle());
@@ -66,6 +87,13 @@ export class TopBar {
 
         if (debugMode && handlers.onDebugToggle) {
             debugMode.addEventListener('change', (e) => handlers.onDebugToggle(e.target.checked));
+        }
+
+        if (trackSelect && handlers.onTrackChange) {
+            trackSelect.addEventListener('change', (e) => {
+                this.currentTrack = e.target.value;
+                handlers.onTrackChange(e.target.value);
+            });
         }
     }
 

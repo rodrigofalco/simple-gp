@@ -10,7 +10,11 @@ import { RaceSession } from './core/RaceSession.js';
 import { TopBar } from './ui/TopBar.js';
 import { Scoreboard } from './ui/Scoreboard.js';
 import { PlayerControls } from './ui/PlayerControls.js';
+import { RaceHUD } from './ui/RaceHUD.js';
+import { RaceCountdown } from './ui/RaceCountdown.js';
+import { KeyboardShortcuts } from './ui/KeyboardShortcuts.js';
 import { PLAYER_INDICES } from './config/constants.js';
+import { DEFAULT_TRACK, AVAILABLE_TRACKS } from './config/tracks.js';
 
 // Global state for selected racer (used by RaceSession for camera following)
 window.globalSelectedRacerId = 0;
@@ -51,13 +55,9 @@ function createGameLayout() {
             </div>
         </div>
 
-        <!-- Floating Strategy Panel (bottom-left) -->
-        <div class="absolute bottom-4 left-4 bg-white/95 backdrop-blur-sm p-4 rounded-xl shadow-lg border border-gray-200" style="z-index: 10; max-width: 500px; max-height: 40vh; overflow-y: auto;">
-            <div class="flex justify-between items-center border-b pb-2 mb-3">
-                <h3 class="font-bold text-gray-800">🎮 Estrategia de Equipo</h3>
-                <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">Clic en piloto para cámara</span>
-            </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="playerControls"></div>
+        <!-- Compact Strategy Panel (bottom-left) -->
+        <div class="absolute bottom-4 left-4 bg-black/80 backdrop-blur-md p-3 rounded-xl shadow-lg border border-white/10" style="z-index: 10;">
+            <div class="flex gap-3" id="playerControls"></div>
         </div>
     </div>
   `;
@@ -77,14 +77,24 @@ async function initGame() {
   app.innerHTML = createGameLayout();
 
   // Initialize UI components
+  const defaultTrackInfo = AVAILABLE_TRACKS.find(t => t.id === DEFAULT_TRACK) || AVAILABLE_TRACKS[0];
   const topBar = new TopBar('topBarContainer');
   topBar.render({
-    title: 'GP Vector Manager - General Roca Circuit',
-    defaultTrack: 'general-roca'
+    title: `GP Vector Manager - ${defaultTrackInfo.name}`,
+    defaultTrack: DEFAULT_TRACK
   });
 
   const scoreboard = new Scoreboard('scoreboard');
   const playerControls = new PlayerControls('playerControls');
+
+  // Initialize new UI components
+  const raceHUD = new RaceHUD('gameContainer');
+  const raceCountdown = new RaceCountdown('gameContainer');
+  const keyboardShortcuts = new KeyboardShortcuts('gameContainer');
+
+  // Render new UI components
+  raceHUD.render();
+  keyboardShortcuts.render();
 
   // Create game manager (we'll inject RaceSession support)
   const gameManager = new GameManager('app');
@@ -92,8 +102,57 @@ async function initGame() {
   // Set UI components
   gameManager.setUIComponents({
     scoreboard,
-    playerControls
+    playerControls,
+    raceHUD
   });
+
+  // Store raceHUD reference for real-time updates
+  gameManager.raceHUD = raceHUD;
+
+  // Add custom UI update for HUD (called on significant changes)
+  const originalUpdateUI = gameManager.updateUI.bind(gameManager);
+  gameManager.updateUI = function() {
+    originalUpdateUI();
+    this._updateHUD();
+  };
+
+  // Add HUD update method (called every frame for real-time speed/position)
+  gameManager._updateHUD = function() {
+    if (this.sessions.length > 0 && this.sessions[0].racers && this.raceHUD) {
+      const session = this.sessions[0];
+      const selectedId = this.state.get('selectedRacerId');
+      const racer = session.racers.find(r => r.id === selectedId) || session.racers[0];
+
+      // Calculate position
+      const sorted = [...session.racers].sort((a, b) => {
+        if (a.finished && b.finished) {
+          return a.finishTime - b.finishTime;
+        }
+        if (a.finished !== b.finished) {
+          return a.finished ? -1 : 1;
+        }
+        return b.progress - a.progress;
+      });
+      const position = sorted.findIndex(r => r.id === racer.id) + 1;
+
+      // Update HUD
+      this.raceHUD.update(racer, position, session.racers.length, session.totalLaps);
+    }
+  };
+
+  // Override game loop to update HUD every frame
+  const originalGameLoop = gameManager.gameLoop.bind(gameManager);
+  gameManager.gameLoop = function(timestamp) {
+    // Call original game loop
+    originalGameLoop(timestamp);
+
+    // Update HUD every frame for real-time speed display (only when not paused)
+    if (!this.state.get('isPaused')) {
+      this._updateHUD();
+    }
+  };
+  // Re-bind for requestAnimationFrame
+  gameManager._boundGameLoop = gameManager.gameLoop.bind(gameManager);
 
   // Override changeMode to actually create RaceSessions
   const originalChangeMode = gameManager.changeMode.bind(gameManager);
@@ -130,8 +189,9 @@ async function initGame() {
     if (canvasGrid) {
       canvasGrid.className = 'grid grid-cols-1 gap-6';
     }
-    // Only create General Roca track
-    this.sessions.push(new RaceSession('canvasGrid', 'general-roca', 'General Roca Circuit'));
+    // Create track based on selected mode
+    const trackInfo = AVAILABLE_TRACKS.find(t => t.id === mode) || AVAILABLE_TRACKS[0];
+    this.sessions.push(new RaceSession('canvasGrid', mode, trackInfo.name));
 
     // Initialize all sessions (async)
     Promise.all(this.sessions.map(session => session.init())).then(() => {
@@ -146,7 +206,22 @@ async function initGame() {
       this.accumulator = 0;
       this.uiUpdateCounter = 0;
 
-      // Start game loop
+      // Reset scoreboard position tracking
+      if (scoreboard.resetPositions) {
+        scoreboard.resetPositions();
+      }
+
+      // Start countdown animation then start game loop
+      raceCountdown.start(
+        () => {
+          // Countdown complete - game already running
+        },
+        (step) => {
+          console.log(`Countdown: ${step}`);
+        }
+      );
+
+      // Start game loop immediately (physics handles start delay)
       this.animationFrameId = requestAnimationFrame(this._boundGameLoop);
     });
   };
@@ -168,6 +243,9 @@ async function initGame() {
           session.disableTrackEditor();
         }
       });
+    },
+    onTrackChange: (trackId) => {
+      gameManager.changeMode(trackId);
     }
   });
 
@@ -198,8 +276,8 @@ async function initGame() {
   document.getElementById('loadingMessage').classList.add('hidden');
   document.getElementById('gameContainer').classList.remove('hidden');
 
-  // Start with General Roca track
-  gameManager.changeMode('general-roca');
+  // Start with default track (Track1)
+  gameManager.changeMode(DEFAULT_TRACK);
 
   // Expose gameManager for debugging
   window.gameManager = gameManager;
@@ -219,8 +297,16 @@ async function initGame() {
     }
   };
 
-  // Add keyboard controls for zoom
+  // Add keyboard controls for zoom and pause
   document.addEventListener('keydown', (e) => {
+    // Spacebar for pause (works even without active session)
+    if (e.key === ' ' || e.code === 'Space') {
+      e.preventDefault();
+      const isPaused = gameManager.togglePause();
+      topBar.updatePauseButton(isPaused);
+      return;
+    }
+
     if (!gameManager.sessions || gameManager.sessions.length === 0) return;
 
     const session = gameManager.sessions[0];

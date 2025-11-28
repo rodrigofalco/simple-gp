@@ -3,9 +3,25 @@
 
 import { STEP_SIZE } from './gameConfig.js';
 
+// --- TRACK REGISTRY ---
+export const AVAILABLE_TRACKS = [
+    { id: 'track1', name: 'Track 1', icon: '🏁' },
+    { id: 'general-roca', name: 'General Roca', icon: '🏔️' }
+];
+
+export const DEFAULT_TRACK = 'track1';
+
 // --- START LINE CONFIGURATION ---
 export function getStartLine(type) {
-    if (type === 'general-roca') {
+    if (type === 'track1') {
+        // Start line from assets/tracks/Track1_path1.json
+        return {
+            p1: { x: 1165, y: 498 },
+            p2: { x: 1167, y: 363 },
+            center: { x: 1166, y: 430.5 },
+            forwardVector: { x: 0.9998902786917918, y: 0.01481318931395247 }
+        };
+    } else if (type === 'general-roca') {
         // Start line from assets/tracks/GeneralRoca_path1.json
         return {
             p1: { x: 1988, y: 427 },
@@ -43,9 +59,8 @@ function addArc(path, cx, cy, r, startAngle, endAngle) {
 // --- 1. STATIC VISUAL TRACK DEFINITIONS ---
 export function getVisualTrackPoints(type) {
     let p = [];
-    if (type === 'general-roca') {
-        // General Roca circuit - follows the racing line from bezier nodes
-        // This visual path is now minimal since we rely on the background image
+    if (type === 'track1' || type === 'general-roca') {
+        // Both tracks rely on background images
         // We return an empty path since we only want to see the background image
         return [];
     } else {
@@ -63,7 +78,32 @@ export function getVisualTrackPoints(type) {
 
 // --- 2. DYNAMIC RACING LINE NODES (Editable) ---
 export function getBezierNodes(type) {
-    if (type === 'general-roca') {
+    if (type === 'track1') {
+        // Track 1 - converted from assets/tracks/Track1_path1.json waypoints
+        // Auto-calculated bezier handles based on adjacent point directions
+        return [
+            {x: 1497, y: 442, handleIn: {x: -80, y: 0}, handleOut: {x: 80, y: 0}},
+            {x: 1798, y: 422, handleIn: {x: -80, y: 0}, handleOut: {x: 80, y: 40}},
+            {x: 1994, y: 572, handleIn: {x: 0, y: -80}, handleOut: {x: 0, y: 80}},
+            {x: 2046, y: 931, handleIn: {x: 0, y: -100}, handleOut: {x: 0, y: 100}},
+            {x: 2084, y: 1213, handleIn: {x: 0, y: -80}, handleOut: {x: -40, y: 40}},
+            {x: 1975, y: 1300, handleIn: {x: 60, y: 0}, handleOut: {x: -60, y: 0}},
+            {x: 1788, y: 1320, handleIn: {x: 60, y: 0}, handleOut: {x: -60, y: -40}},
+            {x: 1636, y: 1181, handleIn: {x: 40, y: 60}, handleOut: {x: -40, y: -60}},
+            {x: 1563, y: 912, handleIn: {x: 0, y: 80}, handleOut: {x: -40, y: -40}},
+            {x: 1419, y: 798, handleIn: {x: 60, y: 0}, handleOut: {x: -60, y: 0}},
+            {x: 1203, y: 789, handleIn: {x: 60, y: 0}, handleOut: {x: -40, y: 30}},
+            {x: 1099, y: 883, handleIn: {x: 40, y: -40}, handleOut: {x: -40, y: 80}},
+            {x: 979, y: 1294, handleIn: {x: 0, y: -120}, handleOut: {x: -40, y: 40}},
+            {x: 806, y: 1399, handleIn: {x: 60, y: 0}, handleOut: {x: -80, y: 0}},
+            {x: 533, y: 1412, handleIn: {x: 80, y: 0}, handleOut: {x: -80, y: -40}},
+            {x: 306, y: 1195, handleIn: {x: -40, y: 80}, handleOut: {x: 40, y: -100}},
+            {x: 334, y: 847, handleIn: {x: -40, y: 100}, handleOut: {x: 30, y: -100}},
+            {x: 421, y: 524, handleIn: {x: -30, y: 100}, handleOut: {x: 50, y: -40}},
+            {x: 636, y: 429, handleIn: {x: -80, y: 0}, handleOut: {x: 150, y: 0}},
+            {x: 1160, y: 428, handleIn: {x: -150, y: 0}, handleOut: {x: 100, y: 0}}
+        ];
+    } else if (type === 'general-roca') {
         // Bezier nodes for General Roca circuit
         // Data from assets/tracks/GeneralRoca_path1.json (Patagonian Track Editor)
         return [

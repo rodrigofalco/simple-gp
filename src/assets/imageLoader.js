@@ -15,6 +15,7 @@ class ImageLoader {
   getImagePath(trackType) {
     const base = import.meta.env.BASE_URL || '/';
     const imageMap = {
+      'track1': `${base}tracks/Track1.png`,
       'general-roca': `${base}tracks/GeneralRoca.png`
     };
 
