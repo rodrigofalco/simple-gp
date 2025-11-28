@@ -2,6 +2,7 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   root: '.',
+  base: '/simple-gp/',
   publicDir: 'assets',
   build: {
     outDir: 'dist',

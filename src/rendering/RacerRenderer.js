@@ -10,13 +10,18 @@ export class RacerRenderer {
   /**
    * Draw a single racer sprite with selection indicator
    * @param {Object} racer - The racer object to draw
-   * @param {Object} camera - Camera object with x, y position
+   * @param {Object} camera - Camera object with x, y, viewportWidth, viewportHeight, zoom
    * @param {number} selectedRacerId - ID of the currently selected racer
    */
   draw(racer, camera, selectedRacerId) {
     // Frustum culling - don't draw if off screen
-    if (racer.x < camera.x - 50 || racer.x > camera.x + 750 ||
-        racer.y < camera.y - 50 || racer.y > camera.y + 450) {
+    // Account for zoom level and use actual viewport dimensions
+    const margin = 100;
+    const viewWidth = (camera.viewportWidth || 1400) / (camera.zoom || 1);
+    const viewHeight = (camera.viewportHeight || 800) / (camera.zoom || 1);
+
+    if (racer.x < camera.x - margin || racer.x > camera.x + viewWidth + margin ||
+        racer.y < camera.y - margin || racer.y > camera.y + viewHeight + margin) {
       return;
     }
 

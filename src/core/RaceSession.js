@@ -14,7 +14,7 @@ import { PhysicsEngine } from '../engine/physics.js';
 import { Renderer } from '../rendering/Renderer.js';
 import { TrackEditor } from '../input/TrackEditor.js';
 import { Racer } from './Racer.js';
-import { getVisualTrackPoints, getBezierNodes } from '../config/tracks.js';
+import { getVisualTrackPoints, getBezierNodes, getStartLine } from '../config/tracks.js';
 import {
     RACER_NAMES_SOURCE,
     RACER_COLORS_SOURCE,
@@ -119,19 +119,31 @@ export class RaceSession {
         this.raceFinished = false;
         this.camera.reset();
 
-        // Calculate starting grid
-        const startPoint = this.racingPath[0];
-        // Look further ahead (30 points = half a curve segment) for more stable direction
-        const lookaheadPoint = this.racingPath[Math.min(30, this.racingPath.length - 1)];
-        const dx = lookaheadPoint.x - startPoint.x;
-        const dy = lookaheadPoint.y - startPoint.y;
-        const angle = Math.atan2(dy, dx);
+        // Calculate starting grid - use start line data if available
+        const startLine = getStartLine(this.trackType);
+        let startPoint, angle, dirX, dirY, perpX, perpY;
 
-        const len = Math.hypot(dx, dy);
-        const dirX = dx / len;
-        const dirY = dy / len;
-        const perpX = -dirY;
-        const perpY = dirX;
+        if (startLine) {
+            // Use precise start line from track data
+            startPoint = startLine.center;
+            dirX = startLine.forwardVector.x;
+            dirY = startLine.forwardVector.y;
+            angle = Math.atan2(dirY, dirX);
+            perpX = -dirY;
+            perpY = dirX;
+        } else {
+            // Fallback: calculate from racing path
+            startPoint = this.racingPath[0];
+            const lookaheadPoint = this.racingPath[Math.min(30, this.racingPath.length - 1)];
+            const dx = lookaheadPoint.x - startPoint.x;
+            const dy = lookaheadPoint.y - startPoint.y;
+            angle = Math.atan2(dy, dx);
+            const len = Math.hypot(dx, dy);
+            dirX = dx / len;
+            dirY = dy / len;
+            perpX = -dirY;
+            perpY = dirX;
+        }
 
         // Shuffle racer attributes
         const names = shuffleArray([...RACER_NAMES_SOURCE]);

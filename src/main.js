@@ -153,9 +153,6 @@ async function initGame() {
 
   // Bind top bar event handlers
   topBar.bindEventHandlers({
-    onTrackChange: (track) => {
-      gameManager.changeMode(track);
-    },
     onPauseToggle: () => {
       const isPaused = gameManager.togglePause();
       topBar.updatePauseButton(isPaused);
@@ -201,8 +198,8 @@ async function initGame() {
   document.getElementById('loadingMessage').classList.add('hidden');
   document.getElementById('gameContainer').classList.remove('hidden');
 
-  // Start with default track
-  gameManager.changeMode('s-curve');
+  // Start with General Roca track
+  gameManager.changeMode('general-roca');
 
   // Expose gameManager for debugging
   window.gameManager = gameManager;
@@ -257,6 +254,23 @@ async function initGame() {
         break;
     }
   });
+
+  // Add mouse wheel zoom support
+  const canvasContainer = document.getElementById('canvasGrid');
+  if (canvasContainer) {
+    canvasContainer.addEventListener('wheel', (e) => {
+      if (!gameManager.sessions || gameManager.sessions.length === 0) return;
+
+      const session = gameManager.sessions[0];
+      const camera = session.camera;
+
+      // Zoom in/out based on scroll direction
+      const zoomDelta = e.deltaY > 0 ? -0.1 : 0.1;
+      camera.adjustZoom(zoomDelta);
+
+      e.preventDefault();
+    }, { passive: false });
+  }
 
   // Add click-to-log coordinates for track debugging
   window.trackPoints = [];

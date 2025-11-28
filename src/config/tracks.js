@@ -3,6 +3,22 @@
 
 import { STEP_SIZE } from './gameConfig.js';
 
+// --- START LINE CONFIGURATION ---
+export function getStartLine(type) {
+    if (type === 'general-roca') {
+        // Start line from assets/tracks/GeneralRoca_path1.json
+        return {
+            p1: { x: 1988, y: 427 },
+            p2: { x: 1948, y: 344 },
+            center: { x: 1968, y: 385.5 },
+            forwardVector: { x: 0.9008444880292465, y: -0.43414192194180556 }
+        };
+    } else {
+        // Fallback - calculate from first path point
+        return null;
+    }
+}
+
 // --- GEOMETRY (Visual Track) ---
 function addLine(path, x1, y1, x2, y2) {
     const dist = Math.hypot(x2 - x1, y2 - y1);
@@ -49,23 +65,37 @@ export function getVisualTrackPoints(type) {
 export function getBezierNodes(type) {
     if (type === 'general-roca') {
         // Bezier nodes for General Roca circuit
-        // Based on actual racing line from track image (yellow centerline)
-        // Image resolution: 2752x1536
-        // All nodes positioned within gray track surface boundaries
-        // Convert normalized coordinates (0-100) to image coordinates (2752x1536)
-        // Formula: imageX = (normalized / 100) * 2752, imageY = (normalized / 100) * 1536
+        // Data from assets/tracks/GeneralRoca_path1.json (Patagonian Track Editor)
         return [
-            {x: 1595.76, y: 614.4, handleIn: {x: -100, y: -50}, handleOut: {x: 100, y: 50}},
-            {x: 2201.6, y: 537.6, handleIn: {x: 50, y: 80}, handleOut: {x: -50, y: -80}},
-            {x: 2559.36, y: 768, handleIn: {x: 70, y: 60}, handleOut: {x: -70, y: -60}},
-            {x: 2064, y: 998.4, handleIn: {x: 80, y: -80}, handleOut: {x: -80, y: 80}},
-            {x: 1376, y: 1075.2, handleIn: {x: -60, y: 40}, handleOut: {x: 60, y: -40}},
-            {x: 2420.16, y: 1305.6, handleIn: {x: 50, y: 100}, handleOut: {x: -50, y: -100}},
-            {x: 1376, y: 1411.2, handleIn: {x: -80, y: 60}, handleOut: {x: 80, y: -60}},
-            {x: 275.2, y: 1228.8, handleIn: {x: -80, y: -100}, handleOut: {x: 80, y: 100}},
-            {x: 496.32, y: 844.8, handleIn: {x: -60, y: -80}, handleOut: {x: 60, y: 80}},
-            {x: 412.8, y: 384, handleIn: {x: -80, y: 50}, handleOut: {x: 80, y: -50}},
-            {x: 1100.8, y: 691.2, handleIn: {x: 50, y: -80}, handleOut: {x: -50, y: 80}}
+            {x: 2279, y: 315, handleIn: {x: -60, y: 24}, handleOut: {x: 60, y: -24}},
+            {x: 2480, y: 421, handleIn: {x: -41, y: -97}, handleOut: {x: 41, y: 97}},
+            {x: 2415, y: 640, handleIn: {x: 82, y: -66}, handleOut: {x: -82, y: 66}},
+            {x: 1934, y: 721, handleIn: {x: 144, y: -24}, handleOut: {x: -144, y: 24}},
+            {x: 1352, y: 746, handleIn: {x: 103, y: -24}, handleOut: {x: -103, y: 24}},
+            {x: 1244, y: 827, handleIn: {x: 29, y: -61}, handleOut: {x: -29, y: 61}},
+            {x: 1256, y: 949, handleIn: {x: -64, y: -66}, handleOut: {x: 64, y: 66}},
+            {x: 1458, y: 1046, handleIn: {x: -160, y: -10}, handleOut: {x: 160, y: 10}},
+            {x: 2327, y: 1080, handleIn: {x: -140, y: -35}, handleOut: {x: 140, y: 35}},
+            {x: 2393, y: 1163, handleIn: {x: 14, y: -60}, handleOut: {x: -14, y: 60}},
+            {x: 2281, y: 1280, handleIn: {x: 111, y: -35}, handleOut: {x: -111, y: 35}},
+            {x: 1653, y: 1306, handleIn: {x: 188, y: -7}, handleOut: {x: -188, y: 7}},
+            {x: 956, y: 1325, handleIn: {x: 209, y: 6}, handleOut: {x: -209, y: -6}},
+            {x: 336, y: 1285, handleIn: {x: 186, y: 32}, handleOut: {x: -186, y: -32}},
+            {x: 259, y: 1115, handleIn: {x: -43, y: 100}, handleOut: {x: 43, y: -100}},
+            {x: 402, y: 953, handleIn: {x: -60, y: 49}, handleOut: {x: 60, y: -49}},
+            {x: 461, y: 824, handleIn: {x: -18, y: 111}, handleOut: {x: 18, y: -111}},
+            {x: 435, y: 453, handleIn: {x: -38, y: 161}, handleOut: {x: 38, y: -161}},
+            {x: 309, y: 288, handleIn: {x: 1, y: 80}, handleOut: {x: -1, y: -80}},
+            {x: 420, y: 187, handleIn: {x: -94, y: 0}, handleOut: {x: 94, y: 0}},
+            {x: 623, y: 290, handleIn: {x: -48, y: -79}, handleOut: {x: 48, y: 79}},
+            {x: 686, y: 513, handleIn: {x: 15, y: -98}, handleOut: {x: -15, y: 98}},
+            {x: 572, y: 883, handleIn: {x: -6, y: -178}, handleOut: {x: 6, y: 178}},
+            {x: 565, y: 1052, handleIn: {x: -40, y: -65}, handleOut: {x: 40, y: 65}},
+            {x: 705, y: 1101, handleIn: {x: -77, y: 59}, handleOut: {x: 77, y: -59}},
+            {x: 962, y: 856, handleIn: {x: -55, y: 73}, handleOut: {x: 55, y: -73}},
+            {x: 1147, y: 690, handleIn: {x: -93, y: 50}, handleOut: {x: 93, y: -50}},
+            {x: 1456, y: 550, handleIn: {x: -152, y: 42}, handleOut: {x: 152, y: -42}},
+            {x: 1961, y: 387, handleIn: {x: -95, y: -21}, handleOut: {x: 95, y: 21}}
         ];
     } else {
         // Fallback stadium
