@@ -11,7 +11,10 @@
     "test:watch": "vitest --watch",
     "test:coverage": "vitest --coverage",
     "lint": "eslint src/",
-    "lint:fix": "eslint src/ --fix"
+    "lint:fix": "eslint src/ --fix",
+    "balance": "node src/testing/runBalanceTest.js",
+    "balance:quick": "node src/testing/runBalanceTest.js --races 20",
+    "balance:full": "node src/testing/runBalanceTest.js --races 200"
   },
   "devDependencies": {
     "@vitest/coverage-v8": "^4.0.14",
