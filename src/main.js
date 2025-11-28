@@ -81,8 +81,8 @@ async function initGame() {
   // Initialize UI components
   const topBar = new TopBar('topBarContainer');
   topBar.render({
-    title: 'GP Vector Manager',
-    defaultTrack: 's-curve'
+    title: 'GP Vector Manager - General Roca Circuit',
+    defaultTrack: 'general-roca'
   });
 
   const scoreboard = new Scoreboard('scoreboard');
@@ -129,19 +129,11 @@ async function initGame() {
     topBar.updatePauseButton(false);
 
     // Create sessions based on mode
-    if (mode === 'test-all') {
-      if (canvasGrid) {
-        canvasGrid.className = 'grid grid-cols-1 lg:grid-cols-3 gap-6';
-      }
-      this.sessions.push(new RaceSession('canvasGrid', 'stadium', 'Stadium'));
-      this.sessions.push(new RaceSession('canvasGrid', 'l-shape', 'L-Circuit'));
-      this.sessions.push(new RaceSession('canvasGrid', 's-curve', 'S-Curve'));
-    } else {
-      if (canvasGrid) {
-        canvasGrid.className = 'grid grid-cols-1 gap-6';
-      }
-      this.sessions.push(new RaceSession('canvasGrid', mode, 'Main Race'));
+    if (canvasGrid) {
+      canvasGrid.className = 'grid grid-cols-1 gap-6';
     }
+    // Only create General Roca track
+    this.sessions.push(new RaceSession('canvasGrid', 'general-roca', 'General Roca Circuit'));
 
     // Initialize all sessions (async)
     Promise.all(this.sessions.map(session => session.init())).then(() => {

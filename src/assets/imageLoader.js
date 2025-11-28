@@ -14,9 +14,7 @@ class ImageLoader {
    */
   getImagePath(trackType) {
     const imageMap = {
-      'stadium': '/assets/tracks/Track1.png',
-      'l-shape': '/assets/tracks/Track1.png', // Use Track1 for now, can be replaced later
-      's-curve': '/assets/tracks/GeneralRoca.png'
+      'general-roca': '/assets/tracks/GeneralRoca.png'
     };
 
     return imageMap[trackType] || null;
