@@ -31,8 +31,20 @@ export class Renderer {
     // Apply camera transform
     this.ctx.translate(-this.camera.x, -this.camera.y);
 
+    // 0. Draw background image if available
+    if (session.backgroundImage) {
+      this.ctx.drawImage(
+        session.backgroundImage,
+        0,
+        0,
+        this.canvas.width,
+        this.canvas.height
+      );
+    }
+
     // 1. Draw visual track (static geometry)
-    this.trackRenderer.drawTrack(session.visualPath);
+    const hasBackground = !!session.backgroundImage;
+    this.trackRenderer.drawTrack(session.visualPath, hasBackground);
 
     // 2. Draw finish line
     this.trackRenderer.drawFinishLine(session.visualPath);
