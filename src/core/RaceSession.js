@@ -103,9 +103,8 @@ export class RaceSession {
         // Generate racing line from bezier nodes
         this.racingPath = generateRacingLineFromNodes(this.bezierNodes);
 
-        // Calculate total laps based on track length
-        const trackLen = this.racingPath.length * 2;
-        this.totalLaps = Math.max(3, Math.round(GAME_CONFIG.targetRacePixels / trackLen));
+        // Fixed lap count for balanced races
+        this.totalLaps = 3;
 
         // Update UI with total laps
         if (this.title === 'Main Race' || this.title === 'Stadium') {

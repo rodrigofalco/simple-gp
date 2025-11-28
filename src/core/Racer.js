@@ -1,3 +1,5 @@
+import { BIKE_ARCHETYPES, BIKE_ARCHETYPE_KEYS } from '../config/constants.js';
+
 /**
  * Racer entity class
  * Encapsulates all racer properties and behavior for the GP Vector Manager game
@@ -18,6 +20,7 @@ export class Racer {
    * @param {number} config.angle - Initial heading angle in radians
    * @param {boolean} config.isPlayer - Whether this racer is controlled by the player
    * @param {Object} [config.params] - Racing parameters (tireAggression, engineMap, risk)
+   * @param {string} [config.bikeType] - Bike archetype (speeder, accelerator, turner)
    */
   constructor(config) {
     const {
@@ -28,7 +31,8 @@ export class Racer {
       position,
       angle,
       isPlayer,
-      params
+      params,
+      bikeType
     } = config;
 
     // Identity
@@ -74,6 +78,18 @@ export class Racer {
 
     // Player flag
     this.isPlayer = isPlayer;
+
+    // Bike archetype - random if not specified
+    this.bikeType = bikeType || BIKE_ARCHETYPE_KEYS[Math.floor(Math.random() * BIKE_ARCHETYPE_KEYS.length)];
+    this.bikeArchetype = BIKE_ARCHETYPES[this.bikeType];
+  }
+
+  /**
+   * Get the bike archetype configuration
+   * @returns {Object} Archetype with multipliers and info
+   */
+  getBikeArchetype() {
+    return this.bikeArchetype;
   }
 
   /**

@@ -10,7 +10,7 @@ export const GAME_CONFIG = {
   // Physics parameters
   targetRacePixels: 9000,
   racerRadius: 7,
-  velocity: 1.8,
+  velocity: 2.4,                    // Increased from 1.8 - higher base speed
   startDelayFrames: 60,
 
   // Path generation
@@ -19,25 +19,25 @@ export const GAME_CONFIG = {
   // Rendering
   fps: 60,
 
-  // Fuel and tire drain
-  fuelDrainBase: 0.008,
-  fuelDrainEngineMultiplier: 0.005,
-  tireDrainBase: 0.006,
-  tireDrainTireMultiplier: 0.006,
+  // Fuel and tire drain - balanced for 3-lap races without param changes
+  fuelDrainBase: 0.003,             // Reduced for full race completion
+  fuelDrainEngineMultiplier: 0.002,
+  tireDrainBase: 0.0025,            // Reduced for full race completion
+  tireDrainTireMultiplier: 0.003,
 
   // Speed modifiers
-  speedBaseMultiplier: 0.82,
-  speedEngineBonus: 0.3,
+  speedBaseMultiplier: 0.85,        // Increased from 0.82
+  speedEngineBonus: 0.35,           // Increased from 0.3
   speedNoFuelPenalty: 0.4,
   speedLowTireThreshold: 20,
   speedLowTireBase: 0.6,
   speedLowTireMultiplier: 0.4,
-  speedRandomVariation: 0.04,
+  speedRandomVariation: 0.03,       // Reduced randomness slightly
 
-  // Acceleration
-  launchAcceleration: 0.02,
-  normalAcceleration: 0.02,
-  deceleration: 0.002,
+  // Acceleration - longer acceleration periods
+  launchAcceleration: 0.008,        // Reduced from 0.02 - slower launch
+  normalAcceleration: 0.012,        // Reduced from 0.02 - longer to reach top speed
+  deceleration: 0.003,              // Increased from 0.002 - faster slowdown
 
   // Finished racer speed
   finishedSpeedMultiplier: 0.5,

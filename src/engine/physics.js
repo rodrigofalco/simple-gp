@@ -47,15 +47,25 @@ export class PhysicsEngine {
     // Calculate speed multiplier
     let speedMult = this.calculateSpeedMultiplier(racer);
 
-    // Calculate target speed
-    const maxSpeed = this.config.velocity * speedMult;
+    // Get bike archetype multipliers
+    const archetype = racer.getBikeArchetype();
+    const topSpeedMult = archetype ? archetype.topSpeedMultiplier : 1.0;
+    const accelMult = archetype ? archetype.accelerationMultiplier : 1.0;
+    const cornerMult = archetype ? archetype.corneringMultiplier : 1.0;
+    const steerMult = archetype ? archetype.maxSteerMultiplier : 1.0;
 
-    // Acceleration/deceleration logic
+    // Calculate target speed with bike archetype bonus
+    const maxSpeed = this.config.velocity * speedMult * topSpeedMult;
+
+    // Acceleration/deceleration logic with archetype multiplier
+    const launchAccel = racer.launchAccel * accelMult;
+    const normalAccel = this.config.normalAcceleration * accelMult;
+
     if (racer.currentSpeed < maxSpeed) {
       if (racer.currentSpeed < 0.5 && !racer.finished) {
-        racer.currentSpeed += racer.launchAccel;
+        racer.currentSpeed += launchAccel;
       } else {
-        racer.currentSpeed += this.config.normalAcceleration;
+        racer.currentSpeed += normalAccel;
       }
     } else {
       racer.currentSpeed -= this.config.deceleration;
@@ -99,6 +109,21 @@ export class PhysicsEngine {
     while (angDiff <= -Math.PI) angDiff += Math.PI * 2;
     while (angDiff > Math.PI) angDiff -= Math.PI * 2;
 
+    // Detect if we're in a corner (significant angle change needed)
+    const isCorner = Math.abs(angDiff) > 0.15;
+
+    // Apply cornering speed penalty/bonus based on archetype
+    if (isCorner && !racer.finished) {
+      const corneringSpeed = racer.currentSpeed * cornerMult;
+      // Turners maintain speed, speeders slow down
+      if (cornerMult < 1.0) {
+        racer.currentSpeed = Math.max(corneringSpeed, racer.currentSpeed * 0.98);
+      } else if (cornerMult > 1.0) {
+        // Turners can accelerate slightly through corners
+        racer.currentSpeed = Math.min(maxSpeed, racer.currentSpeed * 1.01);
+      }
+    }
+
     // Emergency turn prevention (if turning too sharply)
     if (Math.abs(angDiff) > this.config.emergencyTurnThreshold) {
       const safe = path[(targetIdx + 20) % path.length];
@@ -113,8 +138,9 @@ export class PhysicsEngine {
       angDiff *= this.config.sharpTurnDamping;
     }
 
-    const steer = Math.max(Math.min(angDiff, this.config.maxSteerAngle),
-                          -this.config.maxSteerAngle);
+    // Apply archetype steering multiplier
+    const maxSteer = this.config.maxSteerAngle * steerMult;
+    const steer = Math.max(Math.min(angDiff, maxSteer), -maxSteer);
 
     // Apply steering with random noise
     racer.angle += steer + (Math.random() - 0.5) * this.config.steeringRandomNoise;

@@ -47,13 +47,21 @@ export class PlayerControls {
                 return `<div><div class="flex justify-between text-[10px] text-gray-500 mb-0.5"><span class="uppercase font-semibold tracking-wide">${label}</span></div>${btnsHtml}</div></div>`;
             };
 
+            // Get bike archetype info
+            const archetype = racer.getBikeArchetype ? racer.getBikeArchetype() : null;
+            const bikeIcon = archetype ? archetype.icon : '';
+            const bikeName = archetype ? archetype.name : '';
+
             panel.innerHTML = `
                 <div class="flex justify-between items-center mb-2 cursor-pointer select-none pilot-header" data-racer-id="${racer.id}">
                     <div class="font-bold text-gray-800 flex items-center text-sm">
                         <span class="w-2.5 h-2.5 rounded-full mr-2" style="background-color: ${racer.color}"></span>
                         ${racer.name} ${isSelected ? '👁️' : ''}
                     </div>
-                    <div class="text-[10px] text-gray-400 font-mono">#${racer.racingNumber}</div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg" title="${bikeName}: ${archetype ? archetype.description : ''}">${bikeIcon}</span>
+                        <span class="text-[10px] text-gray-400 font-mono">#${racer.racingNumber}</span>
+                    </div>
                 </div>
                 <div class="space-y-2">
                     ${createButtonRow("Neumáticos", "tireAggression", params.tireAggression)}
