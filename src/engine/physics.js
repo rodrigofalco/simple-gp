@@ -109,18 +109,40 @@ export class PhysicsEngine {
     while (angDiff <= -Math.PI) angDiff += Math.PI * 2;
     while (angDiff > Math.PI) angDiff -= Math.PI * 2;
 
-    // Detect if we're in a corner (significant angle change needed)
-    const isCorner = Math.abs(angDiff) > 0.15;
+    // Detect corner intensity (0 = straight, higher = sharper turn)
+    const cornerIntensity = Math.abs(angDiff);
+    const isCorner = cornerIntensity > 0.12;
+    const isSharpCorner = cornerIntensity > 0.25;
 
-    // Apply cornering speed penalty/bonus based on archetype
+    // Apply cornering speed based on archetype
+    // Speeders MUST brake hard before corners, turners maintain speed
     if (isCorner && !racer.finished) {
-      const corneringSpeed = racer.currentSpeed * cornerMult;
-      // Turners maintain speed, speeders slow down
-      if (cornerMult < 1.0) {
-        racer.currentSpeed = Math.max(corneringSpeed, racer.currentSpeed * 0.98);
-      } else if (cornerMult > 1.0) {
-        // Turners can accelerate slightly through corners
-        racer.currentSpeed = Math.min(maxSpeed, racer.currentSpeed * 1.01);
+      // Calculate target corner speed based on archetype
+      // Lower cornerMult = needs to slow down more
+      const cornerSpeedFactor = 0.7 + (cornerMult * 0.25); // 0.7-0.95 range
+      const targetCornerSpeed = maxSpeed * cornerSpeedFactor;
+
+      if (isSharpCorner) {
+        // Sharp corners: everyone slows, but speeders slow much more
+        const sharpBrakeFactor = 0.85 + (cornerMult * 0.12); // 0.85-0.97
+        racer.currentSpeed *= sharpBrakeFactor;
+
+        // Speeders brake even harder in sharp corners
+        if (cornerMult < 1.0) {
+          racer.currentSpeed *= 0.94;
+        }
+      } else {
+        // Normal corners
+        if (cornerMult < 1.0) {
+          // Speeders: brake before the corner
+          racer.currentSpeed = Math.min(racer.currentSpeed, targetCornerSpeed);
+          racer.currentSpeed *= 0.97;
+        } else if (cornerMult > 1.0) {
+          // Turners: maintain or slightly increase speed through corners
+          if (racer.currentSpeed < targetCornerSpeed) {
+            racer.currentSpeed += normalAccel * 0.5;
+          }
+        }
       }
     }
 
