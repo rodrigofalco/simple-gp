@@ -48,36 +48,24 @@ export function getVisualTrackPoints(type) {
 // --- 2. DYNAMIC RACING LINE NODES (Editable) ---
 export function getBezierNodes(type) {
     if (type === 'general-roca') {
-        // Bezier nodes for General Roca circuit based on the actual track layout
-        // The circuit is viewed from above, coordinates map to the image
-        // Start at the finish line (top right area) and follow the circuit counter-clockwise
+        // Bezier nodes for General Roca circuit
+        // Based on actual racing line from track image (yellow centerline)
+        // Image resolution: 2752x1536
+        // All nodes positioned within gray track surface boundaries
+        // Convert normalized coordinates (0-100) to image coordinates (2752x1536)
+        // Formula: imageX = (normalized / 100) * 2752, imageY = (normalized / 100) * 1536
         return [
-            // Start/Finish Area (top right)
-            {x: 590, y: 120, handleIn: {x: -50, y: 0}, handleOut: {x: 50, y: 0}},
-
-            // Top Left Turn
-            {x: 450, y: 120, handleIn: {x: -50, y: 0}, handleOut: {x: 30, y: 0}},
-            {x: 350, y: 180, handleIn: {x: 0, y: -40}, handleOut: {x: 0, y: 40}},
-
-            // Left Side High Turns
-            {x: 280, y: 220, handleIn: {x: 30, y: 0}, handleOut: {x: -50, y: 0}},
-            {x: 180, y: 200, handleIn: {x: 50, y: 0}, handleOut: {x: -30, y: 0}},
-            {x: 150, y: 260, handleIn: {x: 0, y: -40}, handleOut: {x: 0, y: 40}},
-
-            // Left Side Lower Turns
-            {x: 180, y: 340, handleIn: {x: 30, y: 0}, handleOut: {x: -50, y: 0}},
-            {x: 280, y: 380, handleIn: {x: 50, y: 0}, handleOut: {x: -30, y: 0}},
-
-            // Bottom Left Straight
-            {x: 320, y: 380, handleIn: {x: 0, y: 0}, handleOut: {x: 0, y: 0}},
-
-            // Bottom Section
-            {x: 450, y: 380, handleIn: {x: -30, y: 0}, handleOut: {x: 30, y: 0}},
-            {x: 590, y: 340, handleIn: {x: 0, y: 40}, handleOut: {x: 0, y: -40}},
-
-            // Right Side
-            {x: 620, y: 280, handleIn: {x: 30, y: 0}, handleOut: {x: -30, y: 0}},
-            {x: 600, y: 200, handleIn: {x: 0, y: 40}, handleOut: {x: 0, y: -40}}
+            {x: 1595.76, y: 614.4, handleIn: {x: -100, y: -50}, handleOut: {x: 100, y: 50}},
+            {x: 2201.6, y: 537.6, handleIn: {x: 50, y: 80}, handleOut: {x: -50, y: -80}},
+            {x: 2559.36, y: 768, handleIn: {x: 70, y: 60}, handleOut: {x: -70, y: -60}},
+            {x: 2064, y: 998.4, handleIn: {x: 80, y: -80}, handleOut: {x: -80, y: 80}},
+            {x: 1376, y: 1075.2, handleIn: {x: -60, y: 40}, handleOut: {x: 60, y: -40}},
+            {x: 2420.16, y: 1305.6, handleIn: {x: 50, y: 100}, handleOut: {x: -50, y: -100}},
+            {x: 1376, y: 1411.2, handleIn: {x: -80, y: 60}, handleOut: {x: 80, y: -60}},
+            {x: 275.2, y: 1228.8, handleIn: {x: -80, y: -100}, handleOut: {x: 80, y: 100}},
+            {x: 496.32, y: 844.8, handleIn: {x: -60, y: -80}, handleOut: {x: 60, y: 80}},
+            {x: 412.8, y: 384, handleIn: {x: -80, y: 50}, handleOut: {x: 80, y: -50}},
+            {x: 1100.8, y: 691.2, handleIn: {x: 50, y: -80}, handleOut: {x: -50, y: 80}}
         ];
     } else {
         // Fallback stadium

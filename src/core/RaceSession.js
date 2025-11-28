@@ -64,25 +64,28 @@ export class RaceSession {
             this.container.appendChild(header);
         }
 
-        // Create canvas wrapper
+        // Create canvas wrapper - fills the container but maintains aspect ratio
         const canvasWrap = document.createElement('div');
-        canvasWrap.className = "relative w-full bg-gray-800 rounded-lg border-4 border-gray-700 overflow-hidden shadow-inner";
+        canvasWrap.className = "relative w-full h-full flex items-center justify-center bg-gray-900 overflow-hidden";
 
-        // Create canvas element
+        // Create canvas element with FIXED internal resolution
+        // CSS will scale the display, but rendering stays crisp at this resolution
         this.canvas = document.createElement('canvas');
-        this.canvas.width = 700;
-        this.canvas.height = 400;
-        this.canvas.className = "block bg-gray-900 w-full h-auto rounded";
+        this.canvas.width = 1400;  // Fixed internal width (2x original for retina)
+        this.canvas.height = 800;  // Fixed internal height (2x original for retina)
+        this.canvas.className = "block bg-gray-900 max-w-full max-h-full";
+        this.canvas.style.objectFit = 'contain';  // Maintain aspect ratio when CSS scales
 
         canvasWrap.appendChild(this.canvas);
         this.container.appendChild(canvasWrap);
 
         // Append to container
-        document.getElementById(containerId).appendChild(this.container);
+        const parentContainer = document.getElementById(containerId);
+        parentContainer.appendChild(this.container);
 
-        // Initialize subsystems
+        // Initialize subsystems with fixed canvas dimensions
         this.physics = new PhysicsEngine(GAME_CONFIG);
-        this.renderer = new Renderer(this.canvas, 700, 400);
+        this.renderer = new Renderer(this.canvas, this.canvas.width, this.canvas.height);
         this.camera = this.renderer.getCamera();
         this.trackEditor = new TrackEditor(this);
 
@@ -118,9 +121,10 @@ export class RaceSession {
 
         // Calculate starting grid
         const startPoint = this.racingPath[0];
-        const pTrack = this.racingPath[10];
-        const dx = pTrack.x - startPoint.x;
-        const dy = pTrack.y - startPoint.y;
+        // Look further ahead (30 points = half a curve segment) for more stable direction
+        const lookaheadPoint = this.racingPath[Math.min(30, this.racingPath.length - 1)];
+        const dx = lookaheadPoint.x - startPoint.x;
+        const dy = lookaheadPoint.y - startPoint.y;
         const angle = Math.atan2(dy, dx);
 
         const len = Math.hypot(dx, dy);

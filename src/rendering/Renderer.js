@@ -28,8 +28,10 @@ export class Renderer {
     // Save context state
     this.ctx.save();
 
-    // Apply camera transform
-    this.ctx.translate(-this.camera.x, -this.camera.y);
+    // Apply camera transform with zoom
+    this.ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
+    this.ctx.scale(this.camera.zoom, this.camera.zoom);
+    this.ctx.translate(-this.canvas.width / 2 - this.camera.x, -this.canvas.height / 2 - this.camera.y);
 
     // 0. Draw background image if available
     if (session.backgroundImage) {
@@ -37,8 +39,8 @@ export class Renderer {
         session.backgroundImage,
         0,
         0,
-        this.canvas.width,
-        this.canvas.height
+        session.backgroundImage.width,
+        session.backgroundImage.height
       );
     }
 

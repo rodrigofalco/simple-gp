@@ -14,7 +14,7 @@ class ImageLoader {
    */
   getImagePath(trackType) {
     const imageMap = {
-      'general-roca': '/assets/tracks/GeneralRoca.png'
+      'general-roca': '/tracks/GeneralRoca.png'
     };
 
     return imageMap[trackType] || null;

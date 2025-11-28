@@ -19,11 +19,34 @@ export class TrackEditor {
         this.session = session;
         this.dragTarget = null;
         this.enabled = false;
+        this.creationMode = false;  // Toggle to create new nodes
 
         // Bind event handlers to preserve 'this' context
         this._handleMouseDown = this.onMouseDown.bind(this);
         this._handleMouseMove = this.onMouseMove.bind(this);
         this._handleMouseUp = this.onMouseUp.bind(this);
+        this._handleKeyDown = this.onKeyDown.bind(this);
+
+        // Expose console commands for easy toggling
+        window.trackEditor = {
+            toggle: () => {
+                if (this.enabled) {
+                    this.disable();
+                    console.log('Track editor DISABLED');
+                } else {
+                    this.enable();
+                    console.log('Track editor ENABLED - Press C to create nodes, D to dump nodes to console');
+                }
+            },
+            toggleCreation: () => {
+                this.creationMode = !this.creationMode;
+                console.log(`Node creation mode: ${this.creationMode ? 'ON' : 'OFF'}`);
+            },
+            dump: () => {
+                console.log('Current bezier nodes (copy this):');
+                console.log(JSON.stringify(this.session.bezierNodes, null, 2));
+            }
+        };
     }
 
     /**
@@ -47,6 +70,7 @@ export class TrackEditor {
         canvas.addEventListener('mousedown', this._handleMouseDown);
         canvas.addEventListener('mousemove', this._handleMouseMove);
         canvas.addEventListener('mouseup', this._handleMouseUp);
+        window.addEventListener('keydown', this._handleKeyDown);
 
         this.enabled = true;
     }
@@ -63,9 +87,11 @@ export class TrackEditor {
         canvas.removeEventListener('mousedown', this._handleMouseDown);
         canvas.removeEventListener('mousemove', this._handleMouseMove);
         canvas.removeEventListener('mouseup', this._handleMouseUp);
+        window.removeEventListener('keydown', this._handleKeyDown);
 
         this.enabled = false;
         this.dragTarget = null;
+        this.creationMode = false;
 
         // Reset cursor
         if (canvas) {
@@ -92,18 +118,30 @@ export class TrackEditor {
     }
 
     /**
-     * Handle mouse down event - detect and start dragging bezier nodes or handles
+     * Handle mouse down event - detect and start dragging bezier nodes or handles, or create new nodes
      * @param {MouseEvent} e - The mouse event
      */
     onMouseDown(e) {
-        console.log('TrackEditor: mousedown', {
-            camera: this.session.camera,
-            cameraX: this.session.camera?.x,
-            cameraY: this.session.camera?.y
-        });
         const m = this.getMousePos(e, this.session.canvas, this.session.camera);
-        console.log('TrackEditor: mouse position', m);
         const nodes = this.session.bezierNodes;
+
+        // If in creation mode, add a new node at the click position
+        if (this.creationMode) {
+            const newNode = {
+                x: Math.round(m.x),
+                y: Math.round(m.y),
+                handleIn: {x: -50, y: -50},
+                handleOut: {x: 50, y: 50}
+            };
+            nodes.push(newNode);
+            console.log(`Created node at (${newNode.x}, ${newNode.y}). Total nodes: ${nodes.length}`);
+
+            // Regenerate racing path
+            if (this.session.generateRacingLineFromNodes) {
+                this.session.racingPath = this.session.generateRacingLineFromNodes(nodes);
+            }
+            return;
+        }
 
         // Check each node for proximity to mouse click
         for (let i = 0; i < nodes.length; i++) {
@@ -127,14 +165,12 @@ export class TrackEditor {
 
             // Check anchor point (node position)
             const distToAnchor = Math.hypot(n.x - m.x, n.y - m.y);
-            console.log(`Node ${i}: anchor at (${n.x}, ${n.y}), dist: ${distToAnchor.toFixed(1)}`);
             if (distToAnchor < 15) {
                 this.dragTarget = { type: 'anchor', index: i };
                 console.log('TrackEditor: Started dragging anchor', i);
                 return;
             }
         }
-        console.log('TrackEditor: No node found near click');
     }
 
     /**
@@ -184,6 +220,62 @@ export class TrackEditor {
 
         if (this.session.canvas) {
             this.session.canvas.style.cursor = 'pointer';
+        }
+    }
+
+    /**
+     * Handle keyboard events for mode switching and node management
+     * @param {KeyboardEvent} e - The keyboard event
+     */
+    onKeyDown(e) {
+        const key = e.key.toLowerCase();
+
+        // C: Toggle node creation mode
+        if (key === 'c') {
+            e.preventDefault();
+            this.creationMode = !this.creationMode;
+            console.log(`Node creation mode: ${this.creationMode ? 'ON (click to add nodes)' : 'OFF'}`);
+            if (this.session.canvas) {
+                this.session.canvas.style.cursor = this.creationMode ? 'crosshair' : 'pointer';
+            }
+            return;
+        }
+
+        // D: Dump current nodes to console
+        if (key === 'd') {
+            e.preventDefault();
+            console.log('=== Current Bezier Nodes ===');
+            console.log(JSON.stringify(this.session.bezierNodes, null, 2));
+            console.log('=== Copy the JSON above to use in tracks.js ===');
+            return;
+        }
+
+        // Delete: Remove the last created node
+        if (key === 'delete' || key === 'backspace') {
+            e.preventDefault();
+            if (this.session.bezierNodes.length > 1) {
+                const removed = this.session.bezierNodes.pop();
+                console.log(`Removed last node at (${removed.x}, ${removed.y}). Remaining: ${this.session.bezierNodes.length}`);
+
+                // Regenerate racing path
+                if (this.session.generateRacingLineFromNodes) {
+                    this.session.racingPath = this.session.generateRacingLineFromNodes(this.session.bezierNodes);
+                }
+            } else {
+                console.log('Cannot remove - at least one node required');
+            }
+            return;
+        }
+
+        // R: Reset to empty
+        if (key === 'r') {
+            if (confirm('Reset all nodes? This cannot be undone.')) {
+                this.session.bezierNodes = [];
+                this.session.racingPath = [];
+                this.creationMode = true;
+                console.log('All nodes cleared. In creation mode - click to add nodes.');
+            }
+            return;
         }
     }
 }

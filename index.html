@@ -7,13 +7,205 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
-    body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; color: #1f2937; user-select: none; }
-    canvas { background-color: #4ade80; border-radius: 8px; cursor: default; }
+
+    /* Base Styles */
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f3f4f6;
+      color: #1f2937;
+      user-select: none;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    canvas {
+      background-color: #4ade80;
+      border-radius: 8px;
+      cursor: default;
+    }
+
     .cursor-grab { cursor: grab; }
     .cursor-grabbing { cursor: grabbing; }
+
+    /* Scrollbar Styling */
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: #f1f1f1; }
     ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 3px; }
+
+    /* Fullscreen Overlay Layout */
+    #gameContainer {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #canvasGrid {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Scoreboard Overlay (Top Right) */
+    #scoreboardOverlay {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      max-width: 320px;
+      max-height: 70vh;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(200, 200, 200, 0.3);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #scoreboardOverlay .scoreboard-header {
+      padding: 0.75rem;
+      border-bottom: 1px solid rgba(229, 231, 235, 0.8);
+      background: rgba(249, 250, 251, 0.8);
+    }
+
+    #scoreboardOverlay .scoreboard-content {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 0.5rem;
+    }
+
+    #scoreboardOverlay .scoreboard-footer {
+      padding: 0.75rem;
+      border-top: 1px solid rgba(229, 231, 235, 0.8);
+      background: rgba(249, 250, 251, 0.8);
+    }
+
+    /* Strategy Panel Overlay (Bottom Left) */
+    #strategyOverlay {
+      position: absolute;
+      bottom: 1rem;
+      left: 1rem;
+      max-width: 450px;
+      max-height: 50vh;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(200, 200, 200, 0.3);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    #strategyOverlay .strategy-header {
+      padding: 1rem;
+      border-bottom: 1px solid rgba(229, 231, 235, 0.8);
+      background: rgba(249, 250, 251, 0.8);
+    }
+
+    #strategyOverlay .strategy-content {
+      flex-grow: 1;
+      overflow-y: auto;
+      padding: 1rem;
+    }
+
+    /* Overlay Utilities */
+    .overlay-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(200, 200, 200, 0.3);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      #scoreboardOverlay {
+        max-width: 250px;
+        max-height: 60vh;
+        top: 0.5rem;
+        right: 0.5rem;
+      }
+
+      #strategyOverlay {
+        max-width: 350px;
+        max-height: 40vh;
+        bottom: 0.5rem;
+        left: 0.5rem;
+      }
+
+      #scoreboardOverlay .scoreboard-header,
+      #scoreboardOverlay .scoreboard-footer,
+      #strategyOverlay .strategy-header {
+        padding: 0.5rem;
+        font-size: 0.875rem;
+      }
+
+      #strategyOverlay .strategy-content {
+        padding: 0.5rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      #scoreboardOverlay {
+        max-width: 200px;
+        max-height: 50vh;
+      }
+
+      #strategyOverlay {
+        max-width: 280px;
+        max-height: 35vh;
+      }
+
+      /* Stack overlays on very small screens */
+      #strategyOverlay {
+        left: 0.25rem;
+        bottom: 0.25rem;
+      }
+
+      #scoreboardOverlay {
+        right: 0.25rem;
+        top: 0.25rem;
+      }
+    }
+
+    /* Ensure overlays don't overlap on mobile landscape */
+    @media (max-height: 500px) and (orientation: landscape) {
+      #scoreboardOverlay {
+        max-height: 80vh;
+      }
+
+      #strategyOverlay {
+        max-height: 30vh;
+      }
+    }
+
+    /* Animation for overlay appearance */
+    @keyframes fadeInSlide {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .overlay-card {
+      animation: fadeInSlide 0.3s ease-out;
+    }
   </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden p-4">
