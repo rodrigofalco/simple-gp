@@ -24,6 +24,7 @@ import {
 import { GAME_CONFIG } from '../config/gameConfig.js';
 import { shuffleArray } from '../utils/shuffle.js';
 import { generateRacingLineFromNodes } from '../math/bezier.js';
+import { imageLoader } from '../assets/imageLoader.js';
 
 /**
  * RaceSession class - orchestrates a single race session
@@ -92,7 +93,10 @@ export class RaceSession {
     /**
      * Initialize the race session - sets up track and creates racers
      */
-    init() {
+    async init() {
+        // Load background image for this track
+        this.backgroundImage = await imageLoader.loadImage(this.trackType);
+
         // Generate racing line from bezier nodes
         this.racingPath = generateRacingLineFromNodes(this.bezierNodes);
 

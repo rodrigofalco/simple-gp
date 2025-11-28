@@ -143,22 +143,22 @@ async function initGame() {
       this.sessions.push(new RaceSession('canvasGrid', mode, 'Main Race'));
     }
 
-    // Initialize all sessions
-    this.sessions.forEach(session => session.init());
+    // Initialize all sessions (async)
+    Promise.all(this.sessions.map(session => session.init())).then(() => {
+      // Update UI
+      this.updateUI();
 
-    // Update UI
-    this.updateUI();
+      // Update state
+      this.state.setRaceStatus('ready');
 
-    // Update state
-    this.state.setRaceStatus('ready');
+      // Reset game loop timing
+      this.lastTimestamp = 0;
+      this.accumulator = 0;
+      this.uiUpdateCounter = 0;
 
-    // Reset game loop timing
-    this.lastTimestamp = 0;
-    this.accumulator = 0;
-    this.uiUpdateCounter = 0;
-
-    // Start game loop
-    this.animationFrameId = requestAnimationFrame(this._boundGameLoop);
+      // Start game loop
+      this.animationFrameId = requestAnimationFrame(this._boundGameLoop);
+    });
   };
 
   // Bind top bar event handlers

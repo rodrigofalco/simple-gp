@@ -10,8 +10,9 @@ export class TrackRenderer {
   /**
    * Draw the visual track path with borders
    * @param {Array} visualPath - Array of {x, y} points defining the track
+   * @param {boolean} hasBackground - Whether the session has a background image
    */
-  drawTrack(visualPath) {
+  drawTrack(visualPath, hasBackground = false) {
     const trackWidth = 140;
     this.ctx.lineJoin = 'round';
     this.ctx.lineCap = 'round';
@@ -26,8 +27,19 @@ export class TrackRenderer {
     }
     this.ctx.closePath();
     this.ctx.lineWidth = trackWidth;
-    this.ctx.strokeStyle = '#374151';
+
+    // Adjust opacity based on whether there's a background image
+    // If background exists, use semi-transparent track to show image
+    if (hasBackground) {
+      this.ctx.globalAlpha = 0.65;
+      this.ctx.strokeStyle = '#374151';
+    } else {
+      this.ctx.strokeStyle = '#374151';
+    }
     this.ctx.stroke();
+
+    // Reset alpha
+    this.ctx.globalAlpha = 1.0;
 
     // Draw track borders (white lines)
     this.ctx.lineWidth = 4;
