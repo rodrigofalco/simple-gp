@@ -4,55 +4,111 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A top-down 2D racing manager game built as a single HTML file with vanilla JavaScript and HTML5 Canvas. Players manage team strategy (tire aggression, engine mapping, risk) while AI racers compete on various tracks.
+A top-down 2D racing manager game with vanilla JavaScript and HTML5 Canvas. Players manage team strategy (tire aggression, engine mapping, risk) while AI racers compete on various tracks.
 
 ## Development
 
-**Run the game:** Open `index.html` directly in a browser (no build step required)
+```bash
+npm install          # Install dependencies
+npm run dev          # Start Vite dev server (http://localhost:3000)
+npm run build        # Build for production
+npm run preview      # Preview production build
+npm run test         # Run tests with Vitest
+npm run lint         # ESLint check
+```
 
-**No dependencies to install** - uses CDN-loaded Tailwind CSS and Firebase (Firebase is stubbed, not functional)
+**Legacy mode:** Open `index.old.html` directly in browser (original single-file version)
 
 ## Architecture
 
-### Single-File Structure
-Everything lives in `index.html`:
-- HTML layout with Tailwind CSS styling
-- Game logic in a single `<script>` block
-- No external JS files or modules
+### Module Structure
+
+```
+src/
+├── main.js                 # Entry point, initializes game
+├── config/
+│   ├── constants.js        # RACER_NAMES, COLORS, NUMBERS, PLAYER_INDICES
+│   ├── gameConfig.js       # GAME_CONFIG object (velocity, radius, etc.)
+│   └── tracks.js           # getVisualTrackPoints(), getBezierNodes()
+├── core/
+│   ├── GameManager.js      # Main orchestrator, game loop, state coordination
+│   ├── RaceSession.js      # Single race instance, delegates to subsystems
+│   └── Racer.js            # Racer entity class
+├── engine/
+│   └── physics.js          # PhysicsEngine: movement, collisions
+├── rendering/
+│   ├── Renderer.js         # Main renderer coordinator
+│   ├── Camera.js           # Smooth camera following
+│   ├── TrackRenderer.js    # Track/finish line/debug splines
+│   └── RacerRenderer.js    # Motorcycle sprite rendering
+├── input/
+│   └── TrackEditor.js      # Debug mode bezier node editing
+├── state/
+│   └── GameState.js        # Observable state with subscribe/notify
+├── ui/
+│   ├── TopBar.js           # Track select, pause, restart, debug toggle
+│   ├── Scoreboard.js       # Race positions list
+│   └── PlayerControls.js   # Strategy panel for players
+├── math/
+│   ├── geometry.js         # addLine(), addArc() for visual paths
+│   └── bezier.js           # getBezierPoint(), generateRacingLineFromNodes()
+└── utils/
+    └── shuffle.js          # Fisher-Yates array shuffle
+```
 
 ### Core Systems
 
-**Track System (Dual-path design):**
-- `getVisualTrackPoints(type)` - Returns display geometry using `addLine()`/`addArc()` helpers
-- `getBezierNodes(type)` - Returns editable control points for racing line
-- `generateRacingLineFromNodes()` - Converts Bezier nodes to physics path
-- Tracks: `'stadium'`, `'l-shape'`, `'s-curve'`
+**GameManager** - Main orchestrator:
+- `changeMode(track)` - Switch tracks, create RaceSessions
+- `gameLoop(timestamp)` - Fixed timestep physics (60 FPS)
+- `togglePause()`, `selectPilot(id)`, `updateParam()`
 
-**RaceSession Class** - Manages a single race instance:
-- `init()` - Sets up track, creates racers with randomized grid positions
-- `update()` - Physics tick: racer movement, fuel/tire wear, collisions
-- `draw()` - Renders track, finish line, debug overlays, racers
-- Supports Bezier node dragging in debug mode
+**RaceSession** - Race instance:
+- Owns: PhysicsEngine, Renderer, TrackEditor, Racer[]
+- `init()` - Setup track, create racers on grid
+- `update()` - Delegate to physics engine
+- `draw()` - Delegate to renderer
 
-**Racer State:**
+**PhysicsEngine** - Movement & collisions:
+- `updateRacer(racer, path, frame, totalLaps)` - Path following, fuel/tire drain
+- `resolveCollisions(racers)` - Collision detection and separation
+
+**GameState** - Observable store:
+- `get(key)`, `set(key, value)`, `subscribe(listener)`
+- State: isPaused, selectedRacerId, globalParams, currentTrack
+
+### Track System (Dual-path design)
+
+1. **Visual Path** - `getVisualTrackPoints(type)` returns display geometry
+2. **Racing Line** - `getBezierNodes(type)` returns editable control points
+3. **Physics Path** - `generateRacingLineFromNodes(nodes)` creates smooth path
+
+Tracks: `'stadium'`, `'l-shape'`, `'s-curve'`, `'test-all'` (shows all 3)
+
+### Key Configuration (src/config/gameConfig.js)
+
+```javascript
+GAME_CONFIG = {
+  velocity: 1.8,           // Base racer speed
+  racerRadius: 7,          // Collision size
+  startDelayFrames: 60,    // Pre-race countdown
+  targetRacePixels: 9000,  // Race length for lap calculation
+  fps: 60                  // Fixed timestep target
+}
+```
+
+### Racer State
+
 ```javascript
 {
-  pathIndex,    // Current position on racing line
-  lap,          // Completed laps
-  progress,     // lap + (pathIndex/pathLength) for sorting
-  fuel, tires,  // Degrade based on params
+  pathIndex,              // Current position on racing line
+  lap, progress,          // Lap count, progress for sorting
+  fuel, tires,            // Degrade based on params
   params: { tireAggression, engineMap, risk }
 }
 ```
 
-### Key Constants
-- `VELOCITY = 1.8` - Base racer speed
-- `RACER_RADIUS = 7` - Collision size
-- `START_DELAY_FRAMES = 60` - Pre-race countdown
-- `PLAYER_INDICES = [0, 1]` - Which racers are player-controlled
+## Documentation
 
-### Global Functions
-- `changeMode(trackType)` - Switch tracks, restart sessions
-- `updateParam(racerId, param, value)` - Modify strategy parameters
-- `selectPilot(id)` - Change camera focus
-- `togglePause()` / `restartAll()` - Race controls
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) - Detailed architecture and migration guide
+- [docs/UI_REVIEW.md](docs/UI_REVIEW.md) - UI/UX analysis and recommendations
