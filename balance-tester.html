@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GP Vector Manager - Balance Tester</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .archetype-speeder { background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); }
+    .archetype-accelerator { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+    .archetype-turner { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+  </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+  <div class="container mx-auto px-4 py-8 max-w-6xl">
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h1 class="text-4xl font-bold mb-2">🏁 GP Vector Manager</h1>
+      <h2 class="text-2xl text-gray-400">Balance Testing System</h2>
+    </div>
+
+    <!-- Configuration Panel -->
+    <div class="bg-gray-800 rounded-lg p-6 mb-8">
+      <h3 class="text-xl font-bold mb-4">Test Configuration</h3>
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+          <label class="block text-sm text-gray-400 mb-1">Races per Track</label>
+          <input type="number" id="numRaces" value="100" min="1" max="1000"
+            class="w-full bg-gray-700 rounded px-3 py-2 text-white">
+        </div>
+        <div>
+          <label class="block text-sm text-gray-400 mb-1">Laps per Race</label>
+          <input type="number" id="numLaps" value="3" min="1" max="10"
+            class="w-full bg-gray-700 rounded px-3 py-2 text-white">
+        </div>
+        <div>
+          <label class="block text-sm text-gray-400 mb-1">Track</label>
+          <select id="trackSelect" class="w-full bg-gray-700 rounded px-3 py-2 text-white">
+            <option value="all">All Tracks</option>
+            <option value="track1">🏁 Track 1</option>
+            <option value="general-roca">🏔️ General Roca</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm text-gray-400 mb-1">Distribution</label>
+          <select id="distribution" class="w-full bg-gray-700 rounded px-3 py-2 text-white">
+            <option value="equal">Equal (recommended)</option>
+            <option value="random">Random</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mt-6 flex gap-4">
+        <button id="runTestBtn" onclick="runTest()"
+          class="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-lg font-bold text-lg transition">
+          ▶️ Run Balance Test
+        </button>
+        <button id="stopTestBtn" onclick="stopTest()" disabled
+          class="bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-bold text-lg transition disabled:opacity-50">
+          ⏹️ Stop
+        </button>
+      </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div id="progressSection" class="bg-gray-800 rounded-lg p-6 mb-8 hidden">
+      <h3 class="text-xl font-bold mb-4">Progress</h3>
+      <div class="mb-2 flex justify-between text-sm text-gray-400">
+        <span id="progressTrack">Track: -</span>
+        <span id="progressPercent">0%</span>
+      </div>
+      <div class="w-full bg-gray-700 rounded-full h-4">
+        <div id="progressBar" class="bg-green-500 h-4 rounded-full transition-all duration-150" style="width: 0%"></div>
+      </div>
+      <div class="mt-2 text-sm text-gray-400">
+        <span id="progressRaces">0 / 0 races</span>
+        <span class="mx-2">|</span>
+        <span id="progressTime">Elapsed: 0s</span>
+      </div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="resultsSection" class="hidden">
+      <!-- Summary Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div id="cardSpeeder" class="archetype-speeder rounded-lg p-6 text-white">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="text-4xl">🚀</span>
+            <div>
+              <h3 class="text-xl font-bold">Speeder</h3>
+              <p class="text-sm opacity-80">High speed, must brake</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <div class="text-2xl font-bold" id="speederWinRate">-</div>
+              <div class="opacity-80">Win Rate</div>
+            </div>
+            <div>
+              <div class="text-2xl font-bold" id="speederAvgPos">-</div>
+              <div class="opacity-80">Avg Position</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="cardAccelerator" class="archetype-accelerator rounded-lg p-6 text-white">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="text-4xl">⚡</span>
+            <div>
+              <h3 class="text-xl font-bold">Accelerator</h3>
+              <p class="text-sm opacity-80">Fast acceleration</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <div class="text-2xl font-bold" id="acceleratorWinRate">-</div>
+              <div class="opacity-80">Win Rate</div>
+            </div>
+            <div>
+              <div class="text-2xl font-bold" id="acceleratorAvgPos">-</div>
+              <div class="opacity-80">Avg Position</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="cardTurner" class="archetype-turner rounded-lg p-6 text-white">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="text-4xl">🔄</span>
+            <div>
+              <h3 class="text-xl font-bold">Turner</h3>
+              <p class="text-sm opacity-80">Best in corners</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <div class="text-2xl font-bold" id="turnerWinRate">-</div>
+              <div class="opacity-80">Win Rate</div>
+            </div>
+            <div>
+              <div class="text-2xl font-bold" id="turnerAvgPos">-</div>
+              <div class="opacity-80">Avg Position</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Balance Assessment -->
+      <div id="balanceAssessment" class="bg-gray-800 rounded-lg p-6 mb-8">
+        <h3 class="text-xl font-bold mb-4">Balance Assessment</h3>
+        <div id="assessmentContent" class="text-lg"></div>
+      </div>
+
+      <!-- Detailed Results -->
+      <div class="bg-gray-800 rounded-lg p-6 mb-8">
+        <h3 class="text-xl font-bold mb-4">Detailed Results by Track</h3>
+        <div id="trackResults"></div>
+      </div>
+
+      <!-- Win Distribution Chart -->
+      <div class="bg-gray-800 rounded-lg p-6 mb-8">
+        <h3 class="text-xl font-bold mb-4">Win Distribution</h3>
+        <div id="winChart" class="flex items-end gap-4 h-48 p-4">
+          <!-- Chart bars will be inserted here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Archetype Tuning Panel -->
+    <div class="bg-gray-800 rounded-lg p-6 mb-8">
+      <h3 class="text-xl font-bold mb-4">🔧 Archetype Parameter Tuning</h3>
+      <p class="text-gray-400 mb-4">Adjust archetype parameters and re-run tests to find optimal balance.</p>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Speeder -->
+        <div class="bg-gray-700 rounded p-4">
+          <h4 class="font-bold mb-3 flex items-center gap-2">🚀 Speeder</h4>
+          <div class="space-y-3 text-sm">
+            <div>
+              <label class="flex justify-between">Top Speed Mult <span id="speederTopSpeedVal">1.06</span></label>
+              <input type="range" id="speederTopSpeed" min="0.9" max="1.2" step="0.01" value="1.06"
+                oninput="updateSliderVal(this)" class="w-full">
+            </div>
+            <div>
+              <label class="flex justify-between">Acceleration Mult <span id="speederAccelVal">0.85</span></label>
+              <input type="range" id="speederAccel" min="0.5" max="1.5" step="0.05" value="0.85"
+                oninput="updateSliderVal(this)" class="w-full">
+            </div>
+            <div>
+              <label class="flex justify-between">Cornering Mult <span id="speederCornerVal">0.70</span></label>
+              <input type="range" id="speederCorner" min="0.5" max="1.2" step="0.05" value="0.70"
+                oninput="updateSliderVal(this)" class="w-full">
+            </div>
+            <div>
+              <label class="flex justify-between">Steer Mult <span id="speederSteerVal">0.85</span></label>
+              <input type="range" id="speederSteer" min="0.5" max="1.5" step="0.05" value="0.85"
+                oninput="updateSliderVal(this)" class="w-full">
+            </div>
+          </div>
+        </div>
+
+        <!-- Accelerator -->
+        <div class="bg-gray-700 rounded p-4">
+          <h4 class="font-bold mb-3 flex items-center gap-2">⚡ Accelerator</h4>
+          <div class="space-y-3 text-sm">
+            <div>
+              <label class="flex justify-between">Top Speed Mult <span id="acceleratorTopSpeedVal">0.98</span></label>
+              <input type="range" id="acceleratorTopSpeed" min="0.9" max="1.2" step="0.01" value="0.98"
+                oninput="updateSliderVal(this)" class="w-full">
+            </div>
+            <div>
+              <label class="flex justify-between">Acceleration Mult <span id="acceleratorAccelVal">1.40</span></label>
+              <input type="range" id="acceleratorAccel" min="0.5" max="2.0" step="0.05" value="1.40"
+                oninput="updateSliderVal(this)" class="w-full">
+            </div>
+            <div>
+              <label class="flex justify-between">Cornering Mult <span id="acceleratorCornerVal">0.90</span></label>
+              <input type="range" id="acceleratorCorner" min="0.5" max="1.2" step="0.05" value="0.90"
+                oninput="updateSliderVal(this)" class="w-full">
+            </div>
+            <div>
+              <label class="flex justify-between">Steer Mult <span id="acceleratorSteerVal">1.00</span></label>
+              <input type="range" id="acceleratorSteer" min="0.5" max="1.5" step="0.05" value="1.00"
+                oninput="updateSliderVal(this)" class="w-full">
+            </div>
+          </div>
+        </div>
+
+        <!-- Turner -->
+        <div class="bg-gray-700 rounded p-4">
+          <h4 class="font-bold mb-3 flex items-center gap-2">🔄 Turner</h4>
+          <div class="space-y-3 text-sm">
+            <div>
+              <label class="flex justify-between">Top Speed Mult <span id="turnerTopSpeedVal">0.92</span></label>
+              <input type="range" id="turnerTopSpeed" min="0.8" max="1.1" step="0.01" value="0.92"
+                oninput="updateSliderVal(this)" class="w-full">
+            </div>
+            <div>
+              <label class="flex justify-between">Acceleration Mult <span id="turnerAccelVal">1.00</span></label>
+              <input type="range" id="turnerAccel" min="0.5" max="1.5" step="0.05" value="1.00"
+                oninput="updateSliderVal(this)" class="w-full">
+            </div>
+            <div>
+              <label class="flex justify-between">Cornering Mult <span id="turnerCornerVal">1.15</span></label>
+              <input type="range" id="turnerCorner" min="0.8" max="1.5" step="0.05" value="1.15"
+                oninput="updateSliderVal(this)" class="w-full">
+            </div>
+            <div>
+              <label class="flex justify-between">Steer Mult <span id="turnerSteerVal">1.25</span></label>
+              <input type="range" id="turnerSteer" min="0.8" max="1.5" step="0.05" value="1.25"
+                oninput="updateSliderVal(this)" class="w-full">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4 flex gap-4">
+        <button onclick="resetToDefaults()"
+          class="bg-gray-600 hover:bg-gray-500 px-4 py-2 rounded transition">
+          Reset to Defaults
+        </button>
+        <button onclick="copyConfig()"
+          class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded transition">
+          📋 Copy Config to Clipboard
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import {
+      HeadlessRaceSimulator,
+      runBalanceTest,
+      runFullBalanceTest,
+      BIKE_ARCHETYPE_KEYS,
+      AVAILABLE_TRACKS
+    } from './src/testing/HeadlessRaceSimulator.js';
+
+    let isRunning = false;
+    let shouldStop = false;
+    let startTime = 0;
+
+    // Make functions globally accessible
+    window.runTest = async function() {
+      if (isRunning) return;
+
+      isRunning = true;
+      shouldStop = false;
+      startTime = Date.now();
+
+      document.getElementById('runTestBtn').disabled = true;
+      document.getElementById('stopTestBtn').disabled = false;
+      document.getElementById('progressSection').classList.remove('hidden');
+      document.getElementById('resultsSection').classList.add('hidden');
+
+      const numRaces = parseInt(document.getElementById('numRaces').value) || 100;
+      const numLaps = parseInt(document.getElementById('numLaps').value) || 3;
+      const trackSelect = document.getElementById('trackSelect').value;
+      const distribution = document.getElementById('distribution').value;
+
+      // Get archetype overrides from sliders
+      const archetypeOverrides = getArchetypeOverrides();
+
+      const progressCallback = (progress) => {
+        if (shouldStop) return;
+
+        document.getElementById('progressBar').style.width = progress.percentage + '%';
+        document.getElementById('progressPercent').textContent = progress.percentage + '%';
+        document.getElementById('progressRaces').textContent = `${progress.completed} / ${progress.total} races`;
+        document.getElementById('progressTrack').textContent = `Track: ${progress.track || trackSelect}`;
+
+        const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+        document.getElementById('progressTime').textContent = `Elapsed: ${elapsed}s`;
+      };
+
+      try {
+        let results;
+
+        if (trackSelect === 'all') {
+          results = await runFullBalanceTest({
+            numRaces,
+            distribution,
+            archetypeOverrides,
+            totalLaps: numLaps,
+            onProgress: progressCallback
+          });
+        } else {
+          results = await runBalanceTest({
+            trackType: trackSelect,
+            numRaces,
+            distribution,
+            archetypeOverrides,
+            totalLaps: numLaps,
+            onProgress: progressCallback
+          });
+        }
+
+        if (!shouldStop) {
+          displayResults(results);
+        }
+      } catch (error) {
+        console.error('Test failed:', error);
+        alert('Test failed: ' + error.message);
+      }
+
+      isRunning = false;
+      document.getElementById('runTestBtn').disabled = false;
+      document.getElementById('stopTestBtn').disabled = true;
+    };
+
+    window.stopTest = function() {
+      shouldStop = true;
+    };
+
+    function getArchetypeOverrides() {
+      return {
+        speeder: {
+          topSpeedMultiplier: parseFloat(document.getElementById('speederTopSpeed').value),
+          accelerationMultiplier: parseFloat(document.getElementById('speederAccel').value),
+          corneringMultiplier: parseFloat(document.getElementById('speederCorner').value),
+          maxSteerMultiplier: parseFloat(document.getElementById('speederSteer').value)
+        },
+        accelerator: {
+          topSpeedMultiplier: parseFloat(document.getElementById('acceleratorTopSpeed').value),
+          accelerationMultiplier: parseFloat(document.getElementById('acceleratorAccel').value),
+          corneringMultiplier: parseFloat(document.getElementById('acceleratorCorner').value),
+          maxSteerMultiplier: parseFloat(document.getElementById('acceleratorSteer').value)
+        },
+        turner: {
+          topSpeedMultiplier: parseFloat(document.getElementById('turnerTopSpeed').value),
+          accelerationMultiplier: parseFloat(document.getElementById('turnerAccel').value),
+          corneringMultiplier: parseFloat(document.getElementById('turnerCorner').value),
+          maxSteerMultiplier: parseFloat(document.getElementById('turnerSteer').value)
+        }
+      };
+    }
+
+    function displayResults(results) {
+      document.getElementById('resultsSection').classList.remove('hidden');
+
+      // Determine which stats to use
+      let stats;
+      if (results.overall) {
+        stats = results.overall.archetypes;
+      } else {
+        stats = results.archetypes;
+      }
+
+      // Update summary cards
+      for (const archetype of ['speeder', 'accelerator', 'turner']) {
+        const s = stats[archetype];
+        const winRate = s.overallWinRate || s.winRate;
+        const avgPos = s.overallAvgPosition || s.avgPosition;
+
+        document.getElementById(archetype + 'WinRate').textContent = winRate;
+        document.getElementById(archetype + 'AvgPos').textContent = avgPos;
+      }
+
+      // Balance assessment
+      const winRates = {};
+      for (const archetype of ['speeder', 'accelerator', 'turner']) {
+        const s = stats[archetype];
+        const rateStr = s.overallWinRate || s.winRate;
+        winRates[archetype] = parseFloat(rateStr.replace('%', ''));
+      }
+
+      const maxDiff = Math.max(...Object.values(winRates)) - Math.min(...Object.values(winRates));
+      const sorted = Object.entries(winRates).sort((a, b) => b[1] - a[1]);
+
+      let assessmentHTML = '';
+      if (maxDiff < 5) {
+        assessmentHTML = `
+          <div class="text-green-400 font-bold text-2xl mb-2">✅ EXCELLENT BALANCE</div>
+          <p>Win rates are within ${maxDiff.toFixed(1)}% of each other. All archetypes have competitive chances of winning.</p>
+        `;
+      } else if (maxDiff < 15) {
+        assessmentHTML = `
+          <div class="text-yellow-400 font-bold text-2xl mb-2">⚠️ ACCEPTABLE BALANCE</div>
+          <p>Win rate difference: ${maxDiff.toFixed(1)}%</p>
+          <p>Strongest: <span class="font-bold">${sorted[0][0]}</span> (${sorted[0][1].toFixed(1)}%)</p>
+          <p>Weakest: <span class="font-bold">${sorted[2][0]}</span> (${sorted[2][1].toFixed(1)}%)</p>
+        `;
+      } else {
+        assessmentHTML = `
+          <div class="text-red-400 font-bold text-2xl mb-2">❌ POOR BALANCE - NEEDS ADJUSTMENT</div>
+          <p>Win rate difference: ${maxDiff.toFixed(1)}%</p>
+          <p>Dominant: <span class="font-bold">${sorted[0][0]}</span> (${sorted[0][1].toFixed(1)}%) - NEEDS NERF</p>
+          <p>Weakest: <span class="font-bold">${sorted[2][0]}</span> (${sorted[2][1].toFixed(1)}%) - NEEDS BUFF</p>
+        `;
+      }
+      document.getElementById('assessmentContent').innerHTML = assessmentHTML;
+
+      // Track results table
+      let trackHTML = '';
+      if (results.tracks) {
+        for (const trackId in results.tracks) {
+          const track = results.tracks[trackId];
+          trackHTML += `
+            <div class="mb-4">
+              <h4 class="font-bold mb-2">${trackId}</h4>
+              <table class="w-full text-sm">
+                <tr class="text-gray-400">
+                  <th class="text-left py-1">Archetype</th>
+                  <th class="text-right py-1">Wins</th>
+                  <th class="text-right py-1">Win Rate</th>
+                  <th class="text-right py-1">Podiums</th>
+                  <th class="text-right py-1">Avg Pos</th>
+                </tr>
+                ${['speeder', 'accelerator', 'turner'].map(arch => {
+                  const s = track.archetypes[arch];
+                  return `
+                    <tr>
+                      <td class="py-1">${arch === 'speeder' ? '🚀' : arch === 'accelerator' ? '⚡' : '🔄'} ${arch}</td>
+                      <td class="text-right">${s.wins}</td>
+                      <td class="text-right">${s.winRate}</td>
+                      <td class="text-right">${s.podiums}</td>
+                      <td class="text-right">${s.avgPosition}</td>
+                    </tr>
+                  `;
+                }).join('')}
+              </table>
+            </div>
+          `;
+        }
+      } else {
+        trackHTML = `
+          <table class="w-full text-sm">
+            <tr class="text-gray-400">
+              <th class="text-left py-1">Archetype</th>
+              <th class="text-right py-1">Wins</th>
+              <th class="text-right py-1">Win Rate</th>
+              <th class="text-right py-1">Podiums</th>
+              <th class="text-right py-1">Avg Pos</th>
+            </tr>
+            ${['speeder', 'accelerator', 'turner'].map(arch => {
+              const s = results.archetypes[arch];
+              return `
+                <tr>
+                  <td class="py-1">${arch === 'speeder' ? '🚀' : arch === 'accelerator' ? '⚡' : '🔄'} ${arch}</td>
+                  <td class="text-right">${s.wins}</td>
+                  <td class="text-right">${s.winRate}</td>
+                  <td class="text-right">${s.podiums}</td>
+                  <td class="text-right">${s.avgPosition}</td>
+                </tr>
+              `;
+            }).join('')}
+          </table>
+        `;
+      }
+      document.getElementById('trackResults').innerHTML = trackHTML;
+
+      // Win distribution chart
+      const maxWins = Math.max(...Object.values(winRates));
+      let chartHTML = ['speeder', 'accelerator', 'turner'].map(arch => {
+        const rate = winRates[arch];
+        const height = (rate / maxWins * 150) || 5;
+        const color = arch === 'speeder' ? 'bg-red-500' : arch === 'accelerator' ? 'bg-yellow-500' : 'bg-blue-500';
+        return `
+          <div class="flex-1 flex flex-col items-center">
+            <div class="${color} w-full rounded-t" style="height: ${height}px"></div>
+            <div class="mt-2 text-center">
+              <div class="text-2xl">${arch === 'speeder' ? '🚀' : arch === 'accelerator' ? '⚡' : '🔄'}</div>
+              <div class="font-bold">${rate.toFixed(1)}%</div>
+              <div class="text-sm text-gray-400">${arch}</div>
+            </div>
+          </div>
+        `;
+      }).join('');
+      document.getElementById('winChart').innerHTML = chartHTML;
+    }
+
+    window.updateSliderVal = function(slider) {
+      const valSpan = document.getElementById(slider.id + 'Val');
+      if (valSpan) {
+        valSpan.textContent = parseFloat(slider.value).toFixed(2);
+      }
+    };
+
+    window.resetToDefaults = function() {
+      const defaults = {
+        speederTopSpeed: 1.06, speederAccel: 0.85, speederCorner: 0.70, speederSteer: 0.85,
+        acceleratorTopSpeed: 0.98, acceleratorAccel: 1.40, acceleratorCorner: 0.90, acceleratorSteer: 1.00,
+        turnerTopSpeed: 0.92, turnerAccel: 1.00, turnerCorner: 1.15, turnerSteer: 1.25
+      };
+
+      for (const [id, val] of Object.entries(defaults)) {
+        const slider = document.getElementById(id);
+        if (slider) {
+          slider.value = val;
+          updateSliderVal(slider);
+        }
+      }
+    };
+
+    window.copyConfig = function() {
+      const config = getArchetypeOverrides();
+      const configStr = JSON.stringify(config, null, 2);
+      navigator.clipboard.writeText(configStr).then(() => {
+        alert('Configuration copied to clipboard!');
+      });
+    };
+  </script>
+</body>
+</html>
